@@ -396,6 +396,8 @@
     gold_tire_0: 'assets/sprite_gold_tire_0.png',
     gold_tire_1: 'assets/sprite_gold_tire_1.png',
     gold_tire_2: 'assets/sprite_gold_tire_2.png',
+    gold_tire_3: 'assets/sprite_gold_tire_3.png',
+    golden_tire: 'assets/sprite_golden_tire.png',
     bird_0: 'assets/sprite_bird_0.png',
     bird_1: 'assets/sprite_bird_1.png',
     powerup_shield: 'assets/sprite_powerup_shield.png',
@@ -2516,11 +2518,9 @@
     }
 
     renderCollectibles() {
-      const lvl = this.currentLevelKey;
-
       this.collectibles.forEach(item => {
         if (item.type === 'gold_tire') {
-          this.drawThemedGoldTire(item, lvl);
+          this.drawGoldTire(item);
         } else if (item.type === 'shield') {
           const sprite = assets.powerup_shield;
           if (sprite && sprite.complete) {
@@ -2546,82 +2546,30 @@
       });
     }
 
-    drawThemedGoldTire(item, lvl) {
-      const cx = item.x + item.width / 2;
-      const cy = item.y + item.height / 2;
-      const r = 14;
+    drawGoldTire(item) {
+      // Golden tire rotating animation identical across all levels
+      const spriteKey = `gold_tire_${item.frame % 4}`;
+      const sprite = assets[spriteKey] || assets.gold_tire_0 || assets.golden_tire;
 
       this.ctx.save();
+      this.ctx.shadowColor = '#ffd700';
+      this.ctx.shadowBlur = 8;
 
-      if (lvl === 'moon') {
-        // Zero-G cosmic tire with cyan gravitational ring
-        this.ctx.strokeStyle = '#00f0ff';
-        this.ctx.lineWidth = 2;
-        this.ctx.shadowColor = '#00f0ff';
-        this.ctx.shadowBlur = 8;
-        this.ctx.beginPath();
-        this.ctx.ellipse(cx, cy, 18, 7, this.gameTime * 2.5, 0, Math.PI * 2);
-        this.ctx.stroke();
-
-        this.ctx.shadowBlur = 4;
-        this.ctx.fillStyle = '#ffd700';
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        this.ctx.fill();
-
-        this.ctx.fillStyle = '#0b0c10';
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.fillStyle = '#00f0ff';
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-        this.ctx.fill();
-
-      } else if (lvl === 'desert') {
-        // Solar-forged desert relic tire
-        this.ctx.fillStyle = '#ffd700';
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#ff9900';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-
-        this.ctx.fillStyle = '#5c3500';
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-        this.ctx.fill();
-
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.fillRect(cx - 2, cy - r + 3, 4, 3);
-
-      } else if (lvl === 'jungle') {
-        // Ancient gold tire with emerald crystal
-        this.ctx.fillStyle = '#ffd700';
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        this.ctx.fill();
-
-        this.ctx.fillStyle = '#00ff88';
-        this.ctx.beginPath();
-        this.ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.fillStyle = '#ffffff';
-        this.ctx.fillRect(cx - 1, cy - 3, 2, 2);
-
+      if (sprite && sprite.complete) {
+        this.ctx.drawImage(sprite, Math.floor(item.x), Math.floor(item.y), item.width, item.height);
       } else {
-        // Highway: original animated sprite
-        const spriteKey = `gold_tire_${item.frame}`;
-        const sprite = assets[spriteKey] || assets.gold_tire_0;
-        if (sprite && sprite.complete) {
-          this.ctx.drawImage(sprite, item.x, item.y, item.width, item.height);
-        } else {
-          this.ctx.fillStyle = '#ffd700';
-          this.ctx.beginPath();
-          this.ctx.arc(cx, cy, 14, 0, Math.PI * 2);
-          this.ctx.fill();
-        }
+        const cx = Math.floor(item.x + item.width / 2);
+        const cy = Math.floor(item.y + item.height / 2);
+        const r = 14;
+        const scaleX = Math.abs(Math.cos((item.frame * Math.PI) / 2));
+        this.ctx.fillStyle = '#ffd700';
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx, cy, Math.max(4, r * scaleX), r, 0, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.fillStyle = '#1a1000';
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx, cy, Math.max(2, 6 * scaleX), 6, 0, 0, Math.PI * 2);
+        this.ctx.fill();
       }
 
       this.ctx.restore();
