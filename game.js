@@ -753,49 +753,49 @@
         this.sound.init(); // Initialize audio on first keypress
 
         if (this.state === 'PLAYING') {
-          // Horizontal movement: A = atrás, D = adelante
-          if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+          // Horizontal movement: Flechas Izquierda/Derecha (o A/D) = atrás/adelante
+          if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
             this.keys['KeyA'] = true;
           }
-          if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+          if (e.code === 'ArrowRight' || e.code === 'KeyD') {
             this.keys['KeyD'] = true;
           }
 
           if (e.repeat) return;
 
-          // Lane changes: W = carril arriba, S = carril abajo
-          if (e.code === 'KeyW') {
+          // Lane changes: Flecha Arriba (o W) = carril arriba, Flecha Abajo (o S) = carril abajo
+          if (e.code === 'ArrowUp' || e.code === 'KeyW') {
             e.preventDefault();
             this.handleLaneUp();
-          } else if (e.code === 'KeyS') {
+          } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
             e.preventDefault();
             this.handleLaneDown();
-          } else if (e.code === 'ArrowUp' || e.code === 'Space') {
-            // Flecha Arriba (o Espacio) = saltar
+          } else if (e.code === 'KeyO' || e.code === 'Space') {
+            // O o Barra Espaciadora = saltar
             e.preventDefault();
             this.handleJump();
-          } else if (e.code === 'ArrowDown' || e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight') {
-            // Flecha Abajo (o Alt) = agacharse (mantener presionado)
+          } else if (e.code === 'KeyP' || e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight') {
+            // P o Alt = agacharse (mantener presionado)
             e.preventDefault();
             if (!this.player.isSliding) {
               this.handleSlideStart();
             }
-          } else if (e.code === 'Escape' || e.code === 'KeyP') {
+          } else if (e.code === 'Escape') {
             e.preventDefault();
             this.togglePause();
           }
         } else if (this.state === 'MENU') {
-          if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+          if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyO') {
             e.preventDefault();
             this.startGame();
           }
         } else if (this.state === 'GAMEOVER') {
-          if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp') {
+          if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyO') {
             e.preventDefault();
             this.startGame();
           }
         } else if (this.state === 'PAUSED') {
-          if (e.code === 'Escape' || e.code === 'KeyP' || e.code === 'Space') {
+          if (e.code === 'Escape' || e.code === 'Space' || e.code === 'KeyO') {
             e.preventDefault();
             this.togglePause();
           }
@@ -804,15 +804,15 @@
 
       window.addEventListener('keyup', (e) => {
         // Horizontal movement stop
-        if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
           this.keys['KeyA'] = false;
         }
-        if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') {
           this.keys['KeyD'] = false;
         }
 
-        // Stop crouching on release of Flecha Abajo or Alt
-        if (e.code === 'ArrowDown' || e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight') {
+        // Stop crouching on release of P or Alt
+        if (e.code === 'KeyP' || e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight') {
           e.preventDefault();
           this.handleSlideEnd();
         }
