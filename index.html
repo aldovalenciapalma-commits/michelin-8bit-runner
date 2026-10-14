@@ -51,9 +51,6 @@
         </div>
       </div>
 
-      <!-- Toast Notificación de Música en Juego -->
-      <div id="musicToast" class="music-toast hidden"></div>
-
       <!-- Menú Principal -->
       <div id="menuOverlay" class="ui-overlay">
         <div class="mobile-orient-tip">🔄 TIP: ¡Gira tu celular en horizontal para pantalla completa arcade!</div>
@@ -313,11 +310,8 @@
     MICHELIN RETRO 8-BIT RUNNER • PAUSA: [ESC]
   </div>
 
-  <!-- Audio Element for local background music with dual sources -->
-  <audio id="bgAudio" preload="auto" playsinline>
-    <source src="One_More_Quarter.mp3" type="audio/mpeg">
-    <source src="assets/One_More_Quarter.mp3" type="audio/mpeg">
-  </audio>
+  <!-- Audio Element for background soundtrack -->
+  <audio id="bgAudio" preload="auto" playsinline src="One_More_Quarter.mp3"></audio>
 
   <script src="game.js"></script>
 </body>

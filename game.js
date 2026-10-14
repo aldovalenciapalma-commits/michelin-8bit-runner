@@ -42,30 +42,23 @@
         this.bgMusic = new Audio();
       }
       this.bgMusic.volume = 0.75;
-      this.bgMusic.loop = false; // We use the 'ended' event to advance to the next track in an endless playlist loop!
+      this.bgMusic.loop = false; // Only the native 'ended' event will cycle to the next song!
 
-      // When the current song finishes, automatically advance to the next song in the playlist loop
+      // Only advance when the current song finishes playing completely from start to finish
       this.bgMusic.addEventListener('ended', () => {
         if (this.musicEnabled) {
           this.nextTrack();
         }
       });
 
-      // Fallback error handler
+      // Fallback path loader if primary relative path fails (never skip prematurely)
       this.bgMusic.addEventListener('error', () => {
         const track = this.getCurrentTrack();
         if (!this.isTryingFallback && track && track.altFile) {
           this.isTryingFallback = true;
           this.bgMusic.src = track.altFile;
-          this.bgMusic.load();
           if (this.musicEnabled) {
             this.bgMusic.play().catch(() => {});
-          }
-        } else {
-          console.warn('Track playback failed, advancing to next song in loop:', track ? track.title : '');
-          this.isTryingFallback = false;
-          if (this.musicEnabled) {
-            this.nextTrack();
           }
         }
       });
@@ -688,8 +681,7 @@
 
         // Soundtrack Elements
         btnNextTrack: document.getElementById('btnNextTrack'),
-        currentTrackDisplay: document.getElementById('currentTrackDisplay'),
-        musicToast: document.getElementById('musicToast')
+        currentTrackDisplay: document.getElementById('currentTrackDisplay')
       };
 
       // Event listeners
@@ -799,7 +791,7 @@
 
       // Track change callback
       this.sound.onTrackChange = (track, index, total) => {
-        this.handleTrackChange(track, index, total, true);
+        this.handleTrackChange(track, index, total);
       };
 
       // Scanline toggle
@@ -961,7 +953,7 @@
         });
       }
 
-      this.handleTrackChange(this.sound.getCurrentTrack(), 0, this.sound.playlist.length, false);
+      this.handleTrackChange(this.sound.getCurrentTrack(), 0, this.sound.playlist.length);
       this.updateHeaderButtons();
     }
 
@@ -1164,7 +1156,7 @@
       }
     }
 
-    handleTrackChange(track, index, total, showToast = true) {
+    handleTrackChange(track, index, total) {
       if (!track) return;
       if (this.dom.currentTrackDisplay) {
         this.dom.currentTrackDisplay.textContent = `"${track.title.toUpperCase()}" (${index + 1}/${total})`;
@@ -1176,14 +1168,6 @@
         const nextIdx = (index + 1) % total;
         const nextTitle = (this.sound.playlist[nextIdx] && this.sound.playlist[nextIdx].title) || '';
         this.dom.btnNextTrack.title = `Siguiente canción: ${nextTitle} (Bucle de ${total} temas)`;
-      }
-      if (showToast && this.dom.musicToast) {
-        this.dom.musicToast.textContent = `🎵 AHORA SUENA: "${track.title.toUpperCase()}" (${index + 1}/${total})`;
-        this.dom.musicToast.classList.remove('hidden');
-        if (this.musicToastTimer) clearTimeout(this.musicToastTimer);
-        this.musicToastTimer = setTimeout(() => {
-          if (this.dom.musicToast) this.dom.musicToast.classList.add('hidden');
-        }, 3200);
       }
     }
 
