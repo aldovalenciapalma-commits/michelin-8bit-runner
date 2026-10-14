@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bibendum Runner: Michelin 8-Bit</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="game-container">
+    <!-- Header Arcade -->
+    <header class="arcade-header">
+      <div class="arcade-title">★ MICHELIN RETRO ARCADE 1986 ★</div>
+      <div class="header-controls">
+        <button id="btnScanlines" class="icon-btn" title="Activar/Desactivar Scanlines">CRT: ON</button>
+        <button id="btnSound" class="icon-btn" title="Silenciar / Activar Música">🔊 MÚSICA: ON</button>
+        <button id="btnFullscreen" class="icon-btn" title="Pantalla Completa">⛶ PANTALLA</button>
+      </div>
+    </header>
+
+    <!-- Canvas Principal -->
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="960" height="540"></canvas>
+      <div id="crtOverlay" class="crt-overlay"></div>
+
+      <!-- HUD en Juego -->
+      <div id="hudOverlay" class="hud-overlay hidden">
+        <div class="hud-left">
+          <div class="lives-container">
+            <span style="font-size: 9px; margin-right: 4px; color: #ffcc00;">VIDAS:</span>
+            <img id="lifeTire1" class="hud-tire-icon" src="assets/sprite_tire.png" alt="Vida 1">
+            <img id="lifeTire2" class="hud-tire-icon" src="assets/sprite_tire.png" alt="Vida 2">
+            <img id="lifeTire3" class="hud-tire-icon" src="assets/sprite_tire.png" alt="Vida 3">
+          </div>
+          <div class="score-display">SCORE: <span id="hudScore">00000</span></div>
+          <div class="tires-display">
+            <img src="assets/sprite_golden_tire.png" style="width: 18px; height: 18px; vertical-align: middle;">
+            <span id="hudTires">000</span>
+          </div>
+        </div>
+        <div class="hud-right">
+          <div class="high-score-display">HI: <span id="hudHighScore">05000</span></div>
+          <div class="speed-display">VELOCIDAD: <span id="hudSpeed">1.0x</span></div>
+          <div id="powerupBadges" class="powerup-badges">
+            <!-- Active powerups appear here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Menú Principal -->
+      <div id="menuOverlay" class="ui-overlay">
+        <h1 class="game-logo">BIBENDUM RUNNER</h1>
+        <h2 class="game-sublogo">MICHELIN 8-BIT HIGHWAY DASH</h2>
+        
+        <div style="margin-bottom: 20px;">
+          <img src="assets/sprite_bibendum_jump.png" alt="Bibendum" style="width: 105px; height: auto; image-rendering: pixelated; animation: pulse-badge 0.8s infinite alternate;">
+        </div>
+
+        <div class="menu-buttons">
+          <button id="btnStartGame" class="btn-arcade">▶ INICIAR JUEGO</button>
+          <button id="btnHowToPlay" class="btn-arcade btn-secondary">? CÓMO JUGAR</button>
+          <button id="btnHighScores" class="btn-arcade btn-secondary">★ RÉCORDS</button>
+        </div>
+
+        <div style="margin-top: 24px; font-size: 8px; color: #9c8fb8; line-height: 1.5;">
+          PRESIONA [ESPACIO] O HAZ CLIC PARA EMPEZAR<br>
+          BANDA SONORA: "ONE MORE QUARTER" 8-BIT
+        </div>
+      </div>
+
+      <!-- Modal de Cómo Jugar -->
+      <div id="helpModal" class="ui-overlay hidden">
+        <div class="modal-content">
+          <h3 class="modal-title">CÓMO JUGAR & CONTROLES</h3>
+          <div class="instructions-grid">
+            <div class="info-block">
+              <h4>MOVIMIENTOS</h4>
+              <p><span class="key-badge">W</span> o <span class="key-badge">▲</span> : Carril Arriba</p>
+              <p><span class="key-badge">S</span> o <span class="key-badge">▼</span> : Carril Abajo</p>
+              <p><span class="key-badge">ESPACIO</span> : Saltar (evita suelo)</p>
+              <p><span class="key-badge">ALT</span> : Agacharse (mantener presionado)</p>
+            </div>
+            <div class="info-block">
+              <h4>OBJETIVO</h4>
+              <p>Ayuda a <strong>Bibendum</strong> a esquivar los peligros de la autopista y recolecta <strong>llantas doradas</strong> para acumular la mayor puntuación.</p>
+              <p>¡A medida que avanzas el juego será cada vez más veloz!</p>
+            </div>
+            <div class="info-block">
+              <h4>OBSTÁCULOS</h4>
+              <p>• <strong>Clavos, Baches, Charcos:</strong> Salta o cambia de carril.</p>
+              <p>• <strong>Vallas de Obra:</strong> Salta o cambia de carril.</p>
+              <p>• <strong>Carros Rojos:</strong> ¡NO se pueden saltar! Cambia de carril rápidamente.</p>
+              <p>• <strong>Pájaros Voladores:</strong> ¡Mantén presionado <strong>ALT</strong> para agacharte o cambia de carril!</p>
+            </div>
+            <div class="info-block">
+              <h4>ITEMS & PODERES</h4>
+              <p>• <strong>Llanta Dorada:</strong> +100 Puntos.</p>
+              <p>• <strong>Escudo Dorado:</strong> Protege de 1 golpe.</p>
+              <p>• <strong>Imán:</strong> Atrae llantas doradas cercanas.</p>
+              <p>• <strong>Llanta de Repuesto:</strong> Recupera 1 vida.</p>
+            </div>
+          </div>
+          <div style="text-align: center;">
+            <button id="btnCloseHelp" class="btn-arcade" style="padding: 8px 16px; font-size: 10px;">ENTENDIDO</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Récords -->
+      <div id="scoresModal" class="ui-overlay hidden">
+        <div class="modal-content" style="max-width: 420px; text-align: center;">
+          <h3 class="modal-title">TABLA DE RÉCORDS</h3>
+          <div id="highScoresList" style="font-size: 11px; line-height: 2; margin: 15px 0;">
+            <!-- Scores loaded dynamically -->
+          </div>
+          <button id="btnCloseScores" class="btn-arcade" style="padding: 8px 16px; font-size: 10px;">CERRAR</button>
+        </div>
+      </div>
+
+      <!-- Pantalla de Pausa -->
+      <div id="pauseOverlay" class="ui-overlay hidden">
+        <h2 class="game-logo" style="color: var(--arcade-cyan);">JUEGO EN PAUSA</h2>
+        <div class="menu-buttons" style="margin-top: 20px;">
+          <button id="btnResume" class="btn-arcade">CONTINUAR</button>
+          <button id="btnRestartPause" class="btn-arcade btn-secondary">REINICIAR</button>
+          <button id="btnQuitMenu" class="btn-arcade btn-secondary">MENÚ PRINCIPAL</button>
+        </div>
+      </div>
+
+      <!-- Pantalla de Game Over -->
+      <div id="gameOverOverlay" class="ui-overlay hidden">
+        <h2 class="game-logo" style="color: #ff0055; text-shadow: 3px 3px 0 #000, 0 0 20px #ff0055;">GAME OVER</h2>
+        <p id="newRecordBanner" style="color: #ffd700; font-size: 11px; margin-bottom: 12px; display: none;">★ ¡NUEVO RÉCORD HISTÓRICO! ★</p>
+
+        <div style="background: rgba(0,0,0,0.6); border: 2px solid #5a4b82; border-radius: 8px; padding: 16px; margin-bottom: 20px; width: 320px; font-size: 10px; line-height: 1.8;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>PUNTOS:</span>
+            <span id="finalScore" style="color: #ffd700;">00000</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>LLANTAS:</span>
+            <span id="finalTires" style="color: #00f0ff;">0</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>DISTANCIA:</span>
+            <span id="finalDistance" style="color: #ff99bb;">0 m</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-top: 1px dashed #555; padding-top: 6px; margin-top: 6px;">
+            <span>MEJOR RÉCORD:</span>
+            <span id="finalHighScore" style="color: #fff;">00000</span>
+          </div>
+        </div>
+
+        <div class="menu-buttons">
+          <button id="btnPlayAgain" class="btn-arcade">▶ VOLVER A JUGAR</button>
+          <button id="btnMenuFromOver" class="btn-arcade btn-secondary">MENÚ PRINCIPAL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Controles Táctiles / Ratón -->
+    <footer class="arcade-controls-bar">
+      <div class="ctrl-group">
+        <button id="btnCtrlUp" class="ctrl-btn" title="Subir Carril">▲ ARRIBA</button>
+        <button id="btnCtrlDown" class="ctrl-btn" title="Bajar Carril">▼ ABAJO</button>
+      </div>
+      <div class="ctrl-group">
+        <button id="btnCtrlJump" class="ctrl-btn ctrl-jump" title="Saltar">⚡ SALTO (ESPACIO)</button>
+        <button id="btnCtrlSlide" class="ctrl-btn ctrl-slide" title="Agacharse">🛡️ AGACHARSE (ALT)</button>
+      </div>
+    </footer>
+  </div>
+
+  <div class="arcade-footer">
+    MICHELIN RETRO 8-BIT RUNNER • PAUSA: [ESC] O [P]
+  </div>
+
+  <!-- Audio Element for local background music with dual sources -->
+  <audio id="bgAudio" preload="auto" loop playsinline>
+    <source src="One_More_Quarter.mp3" type="audio/mpeg">
+    <source src="assets/One_More_Quarter.mp3" type="audio/mpeg">
+  </audio>
+
+  <script src="game.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: bibendum-8bit-runner
+    env: static
+    buildCommand: ""
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
