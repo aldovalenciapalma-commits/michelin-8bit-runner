@@ -697,14 +697,14 @@
       this.dom.btnSound.onclick = (e) => {
         e.stopPropagation();
         this.sound.init();
-        const active = this.sound.toggleMusic();
-        this.dom.btnSound.textContent = active ? '🔊 MÚSICA: ON' : '🔇 MÚSICA: OFF';
+        this.sound.toggleMusic();
+        this.updateHeaderButtons();
       };
 
       // Scanline toggle
       this.dom.btnScanlines.onclick = () => {
-        const isHidden = this.dom.crtOverlay.classList.toggle('hidden');
-        this.dom.btnScanlines.textContent = isHidden ? 'CRT: OFF' : 'CRT: ON';
+        this.dom.crtOverlay.classList.toggle('hidden');
+        this.updateHeaderButtons();
       };
 
       // Fullscreen
@@ -771,14 +771,12 @@
           e.stopPropagation();
           if (this.touchControlsMode === 'AUTO') {
             this.touchControlsMode = 'ON';
-            this.dom.btnToggleTouch.textContent = '🎮 TÁCTIL: ON';
           } else if (this.touchControlsMode === 'ON') {
             this.touchControlsMode = 'OFF';
-            this.dom.btnToggleTouch.textContent = '🎮 TÁCTIL: OFF';
           } else {
             this.touchControlsMode = 'AUTO';
-            this.dom.btnToggleTouch.textContent = '🎮 TÁCTIL: AUTO';
           }
+          this.updateHeaderButtons();
           this.updateTouchControlsVisibility();
         };
       }
@@ -861,6 +859,8 @@
           this.togglePause();
         });
       }
+
+      this.updateHeaderButtons();
     }
 
     initInput() {
@@ -998,9 +998,10 @@
         isSwiping = false;
       }, { passive: true });
 
-      // Window resize updates touch controls display
+      // Window resize updates touch controls display and button labels
       window.addEventListener('resize', () => {
         this.updateTouchControlsVisibility();
+        this.updateHeaderButtons();
       });
     }
 
@@ -1034,6 +1035,30 @@
         this.dom.mobileTouchControls.classList.remove('hidden');
       } else {
         this.dom.mobileTouchControls.classList.add('hidden');
+      }
+    }
+
+    updateHeaderButtons() {
+      const isMobile = window.innerWidth <= 768;
+      if (this.dom.btnToggleTouch) {
+        this.dom.btnToggleTouch.textContent = isMobile
+          ? `🎮 ${this.touchControlsMode}`
+          : `🎮 TÁCTIL: ${this.touchControlsMode}`;
+      }
+      if (this.dom.btnSound) {
+        const active = this.sound.musicEnabled;
+        this.dom.btnSound.textContent = isMobile
+          ? (active ? '🔊 ON' : '🔇 OFF')
+          : (active ? '🔊 MÚSICA: ON' : '🔇 MÚSICA: OFF');
+      }
+      if (this.dom.btnScanlines) {
+        const isHidden = this.dom.crtOverlay.classList.contains('hidden');
+        this.dom.btnScanlines.textContent = isMobile
+          ? (isHidden ? 'CRT: OFF' : 'CRT: ON')
+          : (isHidden ? 'CRT: OFF' : 'CRT: ON');
+      }
+      if (this.dom.btnFullscreen) {
+        this.dom.btnFullscreen.textContent = isMobile ? '⛶' : '⛶ PANTALLA';
       }
     }
 
@@ -1138,7 +1163,7 @@
       this.sound.init();
       this.sound.musicEnabled = true;
       this.sound.playMusic();
-      this.dom.btnSound.textContent = '🔊 MÚSICA: ON';
+      this.updateHeaderButtons();
       this.state = 'PLAYING';
 
       const lvl = this.levels[this.currentLevelKey] || this.levels.highway;

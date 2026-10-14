@@ -25,12 +25,32 @@ body {
   font-family: 'Press Start 2P', monospace, sans-serif;
   color: var(--text-white);
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 10px;
+}
+
+/* Mobile Orientation Recommendation Tip */
+.mobile-orient-tip {
+  display: none;
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px dashed #00f0ff;
+  color: #00f0ff;
+  font-size: 7px;
+  line-height: 1.4;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  text-align: center;
+  width: 90%;
+  max-width: 320px;
+  animation: pulse-badge 1.5s infinite alternate;
 }
 
 /* Arcade Frame Container */
@@ -724,72 +744,360 @@ canvas#gameCanvas {
   letter-spacing: 1px;
 }
 
-/* Responsive adjustments */
+/* ========================================================
+   RESPONSIVE DESIGN PARA MÓVILES (CELULARES Y TABLETS)
+   ======================================================== */
+
 @media (max-width: 768px) {
+  body {
+    padding: 0;
+    justify-content: flex-start;
+  }
+
+  .game-container {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    box-shadow: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header compacto en móvil */
+  .arcade-header {
+    padding: 6px 10px;
+    font-size: 8px;
+    gap: 6px;
+  }
+
+  .arcade-title {
+    font-size: 8px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+
+  .header-controls {
+    gap: 6px;
+  }
+
+  .icon-btn {
+    padding: 4px 6px;
+    font-size: 7px;
+  }
+
+  /* Overlays y Modales a pantalla completa sin cortes */
+  .ui-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    width: 100dvw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 1000 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 16px 14px 40px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    background: rgba(10, 8, 22, 0.96) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  .ui-overlay.hidden {
+    display: none !important;
+  }
+
   .game-logo {
-    font-size: 18px;
+    font-size: clamp(14px, 5.2vw, 22px);
+    margin-top: 8px;
+    margin-bottom: 4px;
+    line-height: 1.25;
   }
-  .instructions-grid, .level-cards-grid {
-    grid-template-columns: 1fr;
+
+  .game-sublogo {
+    font-size: clamp(7px, 2.3vw, 9px);
+    margin-bottom: 12px;
+    letter-spacing: 1px;
   }
-  .arcade-controls-bar {
-    padding: 8px 10px;
+
+  .menu-buttons {
+    width: 100%;
+    max-width: 280px;
+    gap: 8px;
   }
-  .ctrl-btn {
-    padding: 8px 10px;
+
+  .btn-arcade {
+    padding: 11px 12px;
     font-size: 9px;
+    width: 100%;
   }
+
+  /* Modales en Móvil */
+  .modal-content {
+    width: 96%;
+    max-width: 500px;
+    max-height: 88vh;
+    max-height: 88dvh;
+    padding: 14px 10px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+
+  .modal-title {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .instructions-grid,
+  .level-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .level-card {
+    padding: 8px;
+  }
+
+  .level-card-thumb {
+    height: 48px;
+  }
+
+  .level-card-header {
+    font-size: 10px;
+  }
+
+  .level-card-sub {
+    font-size: 7px;
+    margin-bottom: 4px;
+  }
+
+  .level-card-desc {
+    font-size: 7px;
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+
+  .level-stats {
+    gap: 3px;
+  }
+
+  .stat-badge {
+    font-size: 6px;
+    padding: 2px 4px;
+  }
+
+  /* HUD en móvil */
+  .hud-overlay {
+    padding: 6px 10px;
+    font-size: 8px;
+  }
+
+  .hud-tire-icon {
+    width: 18px;
+    height: 20px;
+  }
+
+  .score-display, .high-score-display, .speed-display, .tires-display {
+    font-size: 8px;
+  }
+
+  /* Ocultar barra clásica de escritorio para no duplicar */
+  .arcade-controls-bar {
+    display: none !important;
+  }
+
+  .arcade-footer {
+    display: none !important;
+  }
+}
+
+/* Modo Celular Vertical (Portrait): Tablero Gamepad ergonómico inferior */
+@media (max-width: 768px) and (orientation: portrait), (max-width: 600px) {
+  .canvas-wrapper {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    flex-shrink: 0;
+  }
+
+  .mobile-touch-overlay {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 16px 12px 24px 12px !important;
+    background: linear-gradient(180deg, #1b1335 0%, #0d081f 100%) !important;
+    border-top: 3px solid #ffcc00 !important;
+    pointer-events: auto !important;
+    flex: 1;
+    min-height: 160px !important;
+    box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.7);
+  }
+
+  .mobile-touch-overlay.hidden {
+    display: none !important;
+  }
+
   .touch-dpad-cluster {
-    bottom: 8px;
-    left: 8px;
+    position: static !important;
+    transform: none !important;
+    margin: 0 !important;
     padding: 4px;
   }
+
+  .touch-action-cluster {
+    position: static !important;
+    transform: none !important;
+    margin: 0 !important;
+    padding: 6px 10px;
+    gap: 8px;
+  }
+
+  .touch-pause-btn {
+    position: static !important;
+    transform: none !important;
+    margin: 0 !important;
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 16px !important;
+  }
+
   .touch-dpad-btn {
     width: 38px;
     height: 38px;
     font-size: 14px;
   }
+
   .touch-dpad-center {
     width: 30px;
     height: 30px;
   }
-  .touch-action-cluster {
-    bottom: 8px;
-    right: 8px;
-    padding: 6px 10px;
-    gap: 8px;
-  }
+
   .touch-action-btn {
-    width: 54px;
-    height: 54px;
+    width: 56px;
+    height: 56px;
   }
+
   .touch-btn-sym {
     font-size: 16px;
   }
+
   .touch-btn-txt {
     font-size: 6px;
   }
 }
 
-@media (max-width: 480px) {
+/* Modo Celular Horizontal (Landscape): Pantalla Completa Arcade estilo Switch */
+@media (orientation: landscape) and (max-height: 550px) {
+  body {
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .game-container {
+    width: 100vw !important;
+    width: 100dvw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #000 !important;
+  }
+
+  .arcade-header {
+    padding: 2px 8px !important;
+    font-size: 7px !important;
+    min-height: 24px;
+  }
+
+  .arcade-title {
+    font-size: 7px !important;
+  }
+
+  .canvas-wrapper {
+    height: calc(100% - 24px) !important;
+    width: auto !important;
+    aspect-ratio: 16 / 9 !important;
+    margin: 0 auto !important;
+    position: relative !important;
+  }
+
+  .mobile-touch-overlay {
+    position: absolute !important;
+    top: 24px !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: calc(100% - 24px) !important;
+    pointer-events: none !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-touch-overlay.hidden {
+    display: none !important;
+  }
+
+  .touch-dpad-cluster {
+    position: absolute !important;
+    bottom: 8px !important;
+    left: 12px !important;
+    padding: 4px !important;
+  }
+
+  .touch-action-cluster {
+    position: absolute !important;
+    bottom: 8px !important;
+    right: 12px !important;
+    padding: 6px 10px !important;
+    gap: 8px !important;
+  }
+
+  .touch-pause-btn {
+    position: absolute !important;
+    top: 8px !important;
+    right: 12px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 12px !important;
+  }
+
   .touch-dpad-btn {
-    width: 34px;
-    height: 34px;
-    font-size: 12px;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 13px !important;
   }
+
   .touch-dpad-center {
-    width: 26px;
-    height: 26px;
+    width: 28px !important;
+    height: 28px !important;
   }
+
   .touch-action-btn {
-    width: 46px;
-    height: 46px;
+    width: 52px !important;
+    height: 52px !important;
   }
-  .touch-btn-sym {
-    font-size: 14px;
+
+  .arcade-controls-bar {
+    display: none !important;
   }
-  .touch-btn-txt {
-    font-size: 5px;
+
+  .arcade-footer {
+    display: none !important;
   }
 }
 

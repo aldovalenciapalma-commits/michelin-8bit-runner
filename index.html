@@ -50,37 +50,9 @@
         </div>
       </div>
 
-      <!-- Controles Táctiles en Pantalla (Mobile Touch Gamepad) -->
-      <div id="mobileTouchControls" class="mobile-touch-overlay hidden">
-        <!-- D-Pad Izquierdo (Cruceta de 4 direcciones) -->
-        <div class="touch-dpad-cluster">
-          <button id="touchBtnUp" class="touch-dpad-btn touch-dpad-up" aria-label="Subir Carril">▲</button>
-          <div class="touch-dpad-middle">
-            <button id="touchBtnLeft" class="touch-dpad-btn touch-dpad-left" aria-label="Mover Atrás">◀</button>
-            <div class="touch-dpad-center"></div>
-            <button id="touchBtnRight" class="touch-dpad-btn touch-dpad-right" aria-label="Mover Adelante">▶</button>
-          </div>
-          <button id="touchBtnDown" class="touch-dpad-btn touch-dpad-down" aria-label="Bajar Carril">▼</button>
-        </div>
-
-        <!-- Botón de Pausa Rápida -->
-        <button id="touchBtnPause" class="touch-pause-btn" aria-label="Pausa">⏸️</button>
-
-        <!-- Botones de Acción Derechos -->
-        <div class="touch-action-cluster">
-          <button id="touchBtnJump" class="touch-action-btn touch-jump-btn" aria-label="Saltar">
-            <span class="touch-btn-sym">⚡</span>
-            <span class="touch-btn-txt">SALTO</span>
-          </button>
-          <button id="touchBtnSlide" class="touch-action-btn touch-slide-btn" aria-label="Agacharse">
-            <span class="touch-btn-sym">🛡️</span>
-            <span class="touch-btn-txt">ABAJO</span>
-          </button>
-        </div>
-      </div>
-
       <!-- Menú Principal -->
       <div id="menuOverlay" class="ui-overlay">
+        <div class="mobile-orient-tip">🔄 TIP: ¡Gira tu celular en horizontal para pantalla completa arcade!</div>
         <h1 class="game-logo">BIBENDUM RUNNER</h1>
         <h2 class="game-sublogo">MICHELIN 8-BIT HIGHWAY DASH</h2>
         
@@ -286,6 +258,35 @@
           <button id="btnPlayAgain" class="btn-arcade">▶ VOLVER A JUGAR</button>
           <button id="btnMenuFromOver" class="btn-arcade btn-secondary">MENÚ PRINCIPAL</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Controles Táctiles en Pantalla (Mobile Touch Gamepad) -->
+    <div id="mobileTouchControls" class="mobile-touch-overlay hidden">
+      <!-- D-Pad Izquierdo (Cruceta de 4 direcciones) -->
+      <div class="touch-dpad-cluster">
+        <button id="touchBtnUp" class="touch-dpad-btn touch-dpad-up" aria-label="Subir Carril">▲</button>
+        <div class="touch-dpad-middle">
+          <button id="touchBtnLeft" class="touch-dpad-btn touch-dpad-left" aria-label="Mover Atrás">◀</button>
+          <div class="touch-dpad-center"></div>
+          <button id="touchBtnRight" class="touch-dpad-btn touch-dpad-right" aria-label="Mover Adelante">▶</button>
+        </div>
+        <button id="touchBtnDown" class="touch-dpad-btn touch-dpad-down" aria-label="Bajar Carril">▼</button>
+      </div>
+
+      <!-- Botón de Pausa Rápida -->
+      <button id="touchBtnPause" class="touch-pause-btn" aria-label="Pausa">⏸️</button>
+
+      <!-- Botones de Acción Derechos -->
+      <div class="touch-action-cluster">
+        <button id="touchBtnJump" class="touch-action-btn touch-jump-btn" aria-label="Saltar">
+          <span class="touch-btn-sym">⚡</span>
+          <span class="touch-btn-txt">SALTO</span>
+        </button>
+        <button id="touchBtnSlide" class="touch-action-btn touch-slide-btn" aria-label="Agacharse">
+          <span class="touch-btn-sym">🛡️</span>
+          <span class="touch-btn-txt">ABAJO</span>
+        </button>
       </div>
     </div>
 
