@@ -493,10 +493,12 @@
 
       // Input tracking
       this.keys = {};
+      this.touchControlsMode = 'AUTO'; // 'AUTO', 'ON', 'OFF'
 
       this.initDom();
       this.initInput();
       this.updateHud();
+      this.updateTouchControlsVisibility();
 
       // Start RAF loop
       this.lastTime = performance.now();
@@ -591,7 +593,18 @@
         btnCtrlLeft: document.getElementById('btnCtrlLeft'),
         btnCtrlRight: document.getElementById('btnCtrlRight'),
         btnCtrlJump: document.getElementById('btnCtrlJump'),
-        btnCtrlSlide: document.getElementById('btnCtrlSlide')
+        btnCtrlSlide: document.getElementById('btnCtrlSlide'),
+
+        // Virtual On-Screen Gamepad
+        btnToggleTouch: document.getElementById('btnToggleTouch'),
+        mobileTouchControls: document.getElementById('mobileTouchControls'),
+        touchBtnUp: document.getElementById('touchBtnUp'),
+        touchBtnDown: document.getElementById('touchBtnDown'),
+        touchBtnLeft: document.getElementById('touchBtnLeft'),
+        touchBtnRight: document.getElementById('touchBtnRight'),
+        touchBtnJump: document.getElementById('touchBtnJump'),
+        touchBtnSlide: document.getElementById('touchBtnSlide'),
+        touchBtnPause: document.getElementById('touchBtnPause')
       };
 
       // Event listeners
@@ -751,6 +764,103 @@
         e.preventDefault();
         this.handleSlideEnd();
       };
+
+      // Touch mode toggle (AUTO -> ON -> OFF -> AUTO)
+      if (this.dom.btnToggleTouch) {
+        this.dom.btnToggleTouch.onclick = (e) => {
+          e.stopPropagation();
+          if (this.touchControlsMode === 'AUTO') {
+            this.touchControlsMode = 'ON';
+            this.dom.btnToggleTouch.textContent = '🎮 TÁCTIL: ON';
+          } else if (this.touchControlsMode === 'ON') {
+            this.touchControlsMode = 'OFF';
+            this.dom.btnToggleTouch.textContent = '🎮 TÁCTIL: OFF';
+          } else {
+            this.touchControlsMode = 'AUTO';
+            this.dom.btnToggleTouch.textContent = '🎮 TÁCTIL: AUTO';
+          }
+          this.updateTouchControlsVisibility();
+        };
+      }
+
+      // Helper to bind robust multi-touch pointer events
+      const bindPointerBtn = (btn, onDown, onUp) => {
+        if (!btn) return;
+        const downHandler = (e) => {
+          e.preventDefault();
+          this.sound.init();
+          btn.classList.add('active');
+          if (onDown) onDown(e);
+        };
+        const upHandler = (e) => {
+          e.preventDefault();
+          btn.classList.remove('active');
+          if (onUp) onUp(e);
+        };
+        btn.addEventListener('pointerdown', downHandler);
+        btn.addEventListener('pointerup', upHandler);
+        btn.addEventListener('pointercancel', upHandler);
+        btn.addEventListener('pointerleave', upHandler);
+      };
+
+      // Virtual D-Pad bindings
+      bindPointerBtn(this.dom.touchBtnUp, () => {
+        this.vibrate(12);
+        this.handleLaneUp();
+      });
+
+      bindPointerBtn(this.dom.touchBtnDown, () => {
+        this.vibrate(12);
+        this.handleLaneDown();
+      });
+
+      bindPointerBtn(
+        this.dom.touchBtnLeft,
+        () => {
+          this.vibrate(10);
+          this.keys['KeyA'] = true;
+        },
+        () => {
+          this.keys['KeyA'] = false;
+        }
+      );
+
+      bindPointerBtn(
+        this.dom.touchBtnRight,
+        () => {
+          this.vibrate(10);
+          this.keys['KeyD'] = true;
+        },
+        () => {
+          this.keys['KeyD'] = false;
+        }
+      );
+
+      // Virtual Action buttons
+      bindPointerBtn(this.dom.touchBtnJump, () => {
+        this.vibrate(20);
+        this.handleJump();
+      });
+
+      bindPointerBtn(
+        this.dom.touchBtnSlide,
+        () => {
+          this.vibrate(15);
+          this.handleSlideStart();
+        },
+        () => {
+          this.handleSlideEnd();
+        }
+      );
+
+      // Virtual Quick Pause button
+      if (this.dom.touchBtnPause) {
+        this.dom.touchBtnPause.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          this.vibrate(12);
+          this.togglePause();
+        });
+      }
     }
 
     initInput() {
@@ -833,6 +943,98 @@
         this.keys = {};
         this.handleSlideEnd();
       });
+
+      // Canvas touch & swipe gestures for mobile / touchscreen users
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+      let isSwiping = false;
+
+      this.canvas.addEventListener('touchstart', (e) => {
+        if (this.state !== 'PLAYING') return;
+        if (e.touches.length === 1) {
+          const t = e.touches[0];
+          touchStartX = t.clientX;
+          touchStartY = t.clientY;
+          touchStartTime = performance.now();
+          isSwiping = false;
+        }
+      }, { passive: true });
+
+      this.canvas.addEventListener('touchmove', (e) => {
+        if (this.state !== 'PLAYING' || e.touches.length === 0) return;
+        const t = e.touches[0];
+        const dy = t.clientY - touchStartY;
+
+        if (dy < -35 && !isSwiping) {
+          isSwiping = true;
+          this.vibrate(20);
+          this.handleJump();
+        } else if (dy > 35 && !isSwiping) {
+          isSwiping = true;
+          this.vibrate(15);
+          this.handleSlideStart();
+          setTimeout(() => this.handleSlideEnd(), 400);
+        }
+      }, { passive: true });
+
+      this.canvas.addEventListener('touchend', (e) => {
+        if (this.state !== 'PLAYING') return;
+        const duration = performance.now() - touchStartTime;
+        if (!isSwiping && duration < 320 && e.changedTouches.length === 1) {
+          const t = e.changedTouches[0];
+          const rect = this.canvas.getBoundingClientRect();
+          const relY = t.clientY - rect.top;
+          const canvasH = rect.height;
+          // Tap upper half -> Lane up, Tap lower half -> Lane down
+          if (relY < canvasH * 0.5) {
+            this.vibrate(12);
+            this.handleLaneUp();
+          } else {
+            this.vibrate(12);
+            this.handleLaneDown();
+          }
+        }
+        isSwiping = false;
+      }, { passive: true });
+
+      // Window resize updates touch controls display
+      window.addEventListener('resize', () => {
+        this.updateTouchControlsVisibility();
+      });
+    }
+
+    vibrate(ms = 15) {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try {
+          navigator.vibrate(ms);
+        } catch (e) {}
+      }
+    }
+
+    isTouchDevice() {
+      return (
+        'ontouchstart' in window ||
+        (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) ||
+        window.innerWidth <= 960
+      );
+    }
+
+    updateTouchControlsVisibility() {
+      if (!this.dom || !this.dom.mobileTouchControls) return;
+      let shouldShow = false;
+      if (this.state === 'PLAYING') {
+        if (this.touchControlsMode === 'ON') {
+          shouldShow = true;
+        } else if (this.touchControlsMode === 'AUTO') {
+          shouldShow = this.isTouchDevice();
+        }
+      }
+      if (shouldShow) {
+        this.dom.mobileTouchControls.classList.remove('hidden');
+      } else {
+        this.dom.mobileTouchControls.classList.add('hidden');
+      }
     }
 
     handleLaneUp() {
@@ -981,6 +1183,7 @@
 
       this.updateLivesUi();
       this.updateHud();
+      this.updateTouchControlsVisibility();
     }
 
     goToMenu() {
@@ -993,6 +1196,7 @@
       if (this.dom.recordModal) this.dom.recordModal.classList.add('hidden');
       this.dom.pauseOverlay.classList.add('hidden');
       this.dom.hudOverlay.classList.add('hidden');
+      this.updateTouchControlsVisibility();
     }
 
     togglePause() {
@@ -1002,6 +1206,7 @@
           this.sound.bgMusic.pause();
         }
         this.dom.pauseOverlay.classList.remove('hidden');
+        this.updateTouchControlsVisibility();
       } else if (this.state === 'PAUSED') {
         this.state = 'PLAYING';
         if (this.sound.musicEnabled && this.sound.bgMusic) {
@@ -1009,11 +1214,13 @@
         }
         this.dom.pauseOverlay.classList.add('hidden');
         this.lastTime = performance.now();
+        this.updateTouchControlsVisibility();
       }
     }
 
     gameOver() {
       this.state = 'GAMEOVER';
+      this.updateTouchControlsVisibility();
       if (this.sound.bgMusic) {
         this.sound.bgMusic.pause();
       }

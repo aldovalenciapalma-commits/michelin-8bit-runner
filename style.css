@@ -401,6 +401,8 @@ canvas#gameCanvas {
   box-shadow: 0 3px 0 #110c1f;
   transition: all 0.1s ease;
   touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .ctrl-btn:active, .ctrl-btn.active {
@@ -419,6 +421,182 @@ canvas#gameCanvas {
 .ctrl-slide {
   background: linear-gradient(180deg, #7a3250 0%, #47192c 100%);
   border-color: #b04370;
+}
+
+/* --- VIRTUAL ON-SCREEN MOBILE GAMEPAD OVERLAY --- */
+.mobile-touch-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 15;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+/* D-Pad Container (Bottom Left) */
+.touch-dpad-cluster {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  gap: 4px;
+  background: rgba(14, 10, 28, 0.55);
+  padding: 6px;
+  border-radius: 18px;
+  border: 2px solid rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.touch-dpad-middle,
+.touch-dpad-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.touch-dpad-center {
+  width: 38px;
+  height: 38px;
+  background: radial-gradient(circle, #221742 0%, #0d081f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.touch-dpad-btn {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(145deg, #2c204d, #140d2b);
+  border: 2px solid #5d4b8c;
+  color: #00f0ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #080512;
+  transition: transform 0.08s ease, background 0.08s ease, border-color 0.08s ease;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.touch-dpad-btn:active, .touch-dpad-btn.active {
+  background: linear-gradient(145deg, #00f0ff, #007799);
+  color: #000;
+  border-color: #ffffff;
+  transform: scale(0.94) translateY(2px);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.8);
+}
+
+/* Action Buttons Container (Bottom Right) */
+.touch-action-cluster {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+  background: rgba(14, 10, 28, 0.55);
+  padding: 8px 12px;
+  border-radius: 36px;
+  border: 2px solid rgba(255, 215, 0, 0.35);
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.touch-action-btn {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  border: 3px solid #ffcc00;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #0d071a, 0 0 10px rgba(0, 0, 0, 0.5);
+  font-family: inherit;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.touch-jump-btn {
+  background: radial-gradient(circle at 35% 35%, #2a9df4, #124a80 80%);
+  border-color: #64b5f6;
+  color: #ffffff;
+}
+
+.touch-jump-btn:active, .touch-jump-btn.active {
+  background: radial-gradient(circle at 35% 35%, #80d8ff, #0288d1 80%);
+  transform: scale(0.93) translateY(3px);
+  box-shadow: 0 1px 0 #0d071a, 0 0 20px rgba(0, 240, 255, 0.9);
+}
+
+.touch-slide-btn {
+  background: radial-gradient(circle at 35% 35%, #e91e63, #7b1236 80%);
+  border-color: #f48fb1;
+  color: #ffffff;
+}
+
+.touch-slide-btn:active, .touch-slide-btn.active {
+  background: radial-gradient(circle at 35% 35%, #ff80ab, #c2185b 80%);
+  transform: scale(0.93) translateY(3px);
+  box-shadow: 0 1px 0 #0d071a, 0 0 20px rgba(255, 0, 128, 0.9);
+}
+
+.touch-btn-sym {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.touch-btn-txt {
+  font-size: 7px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* Pause Button (Top Right) */
+.touch-pause-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(23, 17, 43, 0.75);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: all 0.1s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.touch-pause-btn:active {
+  background: rgba(255, 215, 0, 0.85);
+  color: #000;
+  transform: scale(0.92);
 }
 
 /* Level Selection Grid & Cards */
@@ -560,6 +738,58 @@ canvas#gameCanvas {
   .ctrl-btn {
     padding: 8px 10px;
     font-size: 9px;
+  }
+  .touch-dpad-cluster {
+    bottom: 8px;
+    left: 8px;
+    padding: 4px;
+  }
+  .touch-dpad-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 14px;
+  }
+  .touch-dpad-center {
+    width: 30px;
+    height: 30px;
+  }
+  .touch-action-cluster {
+    bottom: 8px;
+    right: 8px;
+    padding: 6px 10px;
+    gap: 8px;
+  }
+  .touch-action-btn {
+    width: 54px;
+    height: 54px;
+  }
+  .touch-btn-sym {
+    font-size: 16px;
+  }
+  .touch-btn-txt {
+    font-size: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .touch-dpad-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+  .touch-dpad-center {
+    width: 26px;
+    height: 26px;
+  }
+  .touch-action-btn {
+    width: 46px;
+    height: 46px;
+  }
+  .touch-btn-sym {
+    font-size: 14px;
+  }
+  .touch-btn-txt {
+    font-size: 5px;
   }
 }
 

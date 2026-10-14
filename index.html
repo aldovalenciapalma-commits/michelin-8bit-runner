@@ -13,6 +13,7 @@
     <header class="arcade-header">
       <div class="arcade-title">★ MICHELIN RETRO ARCADE 1986 ★</div>
       <div class="header-controls">
+        <button id="btnToggleTouch" class="icon-btn" title="Mostrar / Ocultar Controles Táctiles">🎮 TÁCTIL: AUTO</button>
         <button id="btnScanlines" class="icon-btn" title="Activar/Desactivar Scanlines">CRT: ON</button>
         <button id="btnSound" class="icon-btn" title="Silenciar / Activar Música">🔊 MÚSICA: ON</button>
         <button id="btnFullscreen" class="icon-btn" title="Pantalla Completa">⛶ PANTALLA</button>
@@ -46,6 +47,35 @@
           <div id="powerupBadges" class="powerup-badges">
             <!-- Active powerups appear here -->
           </div>
+        </div>
+      </div>
+
+      <!-- Controles Táctiles en Pantalla (Mobile Touch Gamepad) -->
+      <div id="mobileTouchControls" class="mobile-touch-overlay hidden">
+        <!-- D-Pad Izquierdo (Cruceta de 4 direcciones) -->
+        <div class="touch-dpad-cluster">
+          <button id="touchBtnUp" class="touch-dpad-btn touch-dpad-up" aria-label="Subir Carril">▲</button>
+          <div class="touch-dpad-middle">
+            <button id="touchBtnLeft" class="touch-dpad-btn touch-dpad-left" aria-label="Mover Atrás">◀</button>
+            <div class="touch-dpad-center"></div>
+            <button id="touchBtnRight" class="touch-dpad-btn touch-dpad-right" aria-label="Mover Adelante">▶</button>
+          </div>
+          <button id="touchBtnDown" class="touch-dpad-btn touch-dpad-down" aria-label="Bajar Carril">▼</button>
+        </div>
+
+        <!-- Botón de Pausa Rápida -->
+        <button id="touchBtnPause" class="touch-pause-btn" aria-label="Pausa">⏸️</button>
+
+        <!-- Botones de Acción Derechos -->
+        <div class="touch-action-cluster">
+          <button id="touchBtnJump" class="touch-action-btn touch-jump-btn" aria-label="Saltar">
+            <span class="touch-btn-sym">⚡</span>
+            <span class="touch-btn-txt">SALTO</span>
+          </button>
+          <button id="touchBtnSlide" class="touch-action-btn touch-slide-btn" aria-label="Agacharse">
+            <span class="touch-btn-sym">🛡️</span>
+            <span class="touch-btn-txt">ABAJO</span>
+          </button>
         </div>
       </div>
 
@@ -168,13 +198,14 @@
           <h3 class="modal-title">CÓMO JUGAR & CONTROLES</h3>
           <div class="instructions-grid">
             <div class="info-block">
-              <h4>MOVIMIENTOS</h4>
+              <h4>MOVIMIENTOS (TECLADO / TÁCTIL)</h4>
               <p><span class="key-badge">▲</span> / <span class="key-badge">W</span> : Carril Arriba</p>
               <p><span class="key-badge">▼</span> / <span class="key-badge">S</span> : Carril Abajo</p>
               <p><span class="key-badge">◀</span> / <span class="key-badge">A</span> : Atrás (Izquierda)</p>
               <p><span class="key-badge">▶</span> / <span class="key-badge">D</span> : Adelante (Derecha)</p>
               <p><span class="key-badge">O</span> / <span class="key-badge">ESPACIO</span> : Saltar</p>
               <p><span class="key-badge">P</span> / <span class="key-badge">ALT</span> : Agacharse (mantener)</p>
+              <p style="margin-top: 6px; color: #00f0ff;">📱 <strong>EN CELULAR:</strong> Usa el Gamepad táctil en pantalla o desliza el dedo en el canvas.</p>
             </div>
             <div class="info-block">
               <h4>OBJETIVO</h4>
