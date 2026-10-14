@@ -578,6 +578,8 @@
 
         btnCtrlUp: document.getElementById('btnCtrlUp'),
         btnCtrlDown: document.getElementById('btnCtrlDown'),
+        btnCtrlLeft: document.getElementById('btnCtrlLeft'),
+        btnCtrlRight: document.getElementById('btnCtrlRight'),
         btnCtrlJump: document.getElementById('btnCtrlJump'),
         btnCtrlSlide: document.getElementById('btnCtrlSlide')
       };
@@ -701,6 +703,32 @@
         e.preventDefault();
         this.handleLaneDown();
       };
+      if (this.dom.btnCtrlLeft) {
+        this.dom.btnCtrlLeft.onpointerdown = (e) => {
+          e.preventDefault();
+          this.keys['KeyA'] = true;
+        };
+        this.dom.btnCtrlLeft.onpointerup = (e) => {
+          e.preventDefault();
+          this.keys['KeyA'] = false;
+        };
+        this.dom.btnCtrlLeft.onpointerleave = () => {
+          this.keys['KeyA'] = false;
+        };
+      }
+      if (this.dom.btnCtrlRight) {
+        this.dom.btnCtrlRight.onpointerdown = (e) => {
+          e.preventDefault();
+          this.keys['KeyD'] = true;
+        };
+        this.dom.btnCtrlRight.onpointerup = (e) => {
+          e.preventDefault();
+          this.keys['KeyD'] = false;
+        };
+        this.dom.btnCtrlRight.onpointerleave = () => {
+          this.keys['KeyD'] = false;
+        };
+      }
       this.dom.btnCtrlJump.onpointerdown = (e) => {
         e.preventDefault();
         this.handleJump();
@@ -722,38 +750,47 @@
           return;
         }
 
-        if (e.repeat && e.code !== 'ArrowDown' && e.code !== 'KeyS') return;
-
         this.sound.init(); // Initialize audio on first keypress
 
         if (this.state === 'PLAYING') {
-          // Crouch with Alt or A (or C for retro backward compatibility)
-          if (e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight' || e.code === 'KeyA' || e.code === 'KeyC') {
+          // Horizontal movement: A = atrás, D = adelante
+          if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+            this.keys['KeyA'] = true;
+          }
+          if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+            this.keys['KeyD'] = true;
+          }
+
+          if (e.repeat) return;
+
+          // Lane changes: W = carril arriba, S = carril abajo
+          if (e.code === 'KeyW') {
+            e.preventDefault();
+            this.handleLaneUp();
+          } else if (e.code === 'KeyS') {
+            e.preventDefault();
+            this.handleLaneDown();
+          } else if (e.code === 'ArrowUp' || e.code === 'Space') {
+            // Flecha Arriba (o Espacio) = saltar
+            e.preventDefault();
+            this.handleJump();
+          } else if (e.code === 'ArrowDown' || e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight') {
+            // Flecha Abajo (o Alt) = agacharse (mantener presionado)
             e.preventDefault();
             if (!this.player.isSliding) {
               this.handleSlideStart();
             }
-          } else if (e.code === 'KeyW' || e.code === 'ArrowUp') {
-            e.preventDefault();
-            this.handleLaneUp();
-          } else if (e.code === 'KeyS' || e.code === 'ArrowDown') {
-            e.preventDefault();
-            this.handleLaneDown();
-          } else if (e.code === 'Space' || e.code === 'KeyQ') {
-            // Jump with Space or Q
-            e.preventDefault();
-            this.handleJump();
           } else if (e.code === 'Escape' || e.code === 'KeyP') {
             e.preventDefault();
             this.togglePause();
           }
         } else if (this.state === 'MENU') {
-          if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyQ') {
+          if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp' || e.code === 'KeyW') {
             e.preventDefault();
             this.startGame();
           }
         } else if (this.state === 'GAMEOVER') {
-          if (e.code === 'Space' || e.code === 'Enter') {
+          if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp') {
             e.preventDefault();
             this.startGame();
           }
@@ -766,11 +803,25 @@
       });
 
       window.addEventListener('keyup', (e) => {
-        // Stop crouching on release of Alt or A
-        if (e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight' || e.code === 'KeyA' || e.code === 'KeyC') {
+        // Horizontal movement stop
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+          this.keys['KeyA'] = false;
+        }
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+          this.keys['KeyD'] = false;
+        }
+
+        // Stop crouching on release of Flecha Abajo or Alt
+        if (e.code === 'ArrowDown' || e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight') {
           e.preventDefault();
           this.handleSlideEnd();
         }
+      });
+
+      // Clear keys when window loses focus
+      window.addEventListener('blur', () => {
+        this.keys = {};
+        this.handleSlideEnd();
       });
     }
 
@@ -881,6 +932,8 @@
       const lvl = this.levels[this.currentLevelKey] || this.levels.highway;
 
       // Reset player
+      this.player.x = 140;
+      this.keys = {};
       this.player.lane = 1;
       this.player.currentY = LANES_Y[1];
       this.player.targetY = LANES_Y[1];
@@ -1327,6 +1380,18 @@
 
     updatePlayer(dt) {
       const lvl = this.levels[this.currentLevelKey] || this.levels.highway;
+
+      // Horizontal movement: A = atrás (izquierda), D = adelante (derecha)
+      let moveDir = 0;
+      if (this.keys['KeyA']) moveDir -= 1;
+      if (this.keys['KeyD']) moveDir += 1;
+
+      if (moveDir !== 0) {
+        const hSpeed = 400; // pixels per second
+        this.player.x += moveDir * hSpeed * dt;
+        // Clamp player X so character stays safely within visible highway bounds
+        this.player.x = Math.max(60, Math.min(CANVAS_WIDTH - 160, this.player.x));
+      }
 
       // Smooth lane transition
       this.player.currentY += (this.player.targetY - this.player.currentY) * 14 * dt;
