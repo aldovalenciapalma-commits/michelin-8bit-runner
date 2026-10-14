@@ -1873,49 +1873,167 @@
 
     renderRoad() {
       const lvl = this.currentLevelKey;
-      let asphaltColor = '#6a7178';
-      let dashColor = '#ece8cb';
-      let bottomCurbColor = '#dcd8ba';
 
-      if (lvl === 'desert') {
-        asphaltColor = '#8c7b69';
-        dashColor = '#ffd97d';
-        bottomCurbColor = '#bfa588';
+      if (lvl === 'moon') {
+        this.drawMoonRoad();
+      } else if (lvl === 'desert') {
+        this.drawDesertRoad();
       } else if (lvl === 'jungle') {
-        asphaltColor = '#37473e';
-        dashColor = '#a8e68c';
-        bottomCurbColor = '#245938';
-      } else if (lvl === 'moon') {
-        asphaltColor = '#242730';
-        dashColor = '#00f0ff';
-        bottomCurbColor = '#566075';
-      }
+        this.drawJungleRoad();
+      } else {
+        // Highway: classic asphalt road
+        this.ctx.fillStyle = '#6a7178';
+        this.ctx.fillRect(0, ROAD_TOP_Y + 18, CANVAS_WIDTH, CANVAS_HEIGHT - (ROAD_TOP_Y + 18));
 
-      // Asphalt base
-      this.ctx.fillStyle = asphaltColor;
+        const dividerY1 = 305;
+        const dividerY2 = 415;
+        const bottomCurbY = 525;
+        const dashWidth = 65;
+        const dashGap = 55;
+        const totalDash = dashWidth + dashGap;
+
+        this.ctx.fillStyle = '#ece8cb';
+        let startX = -this.roadDashesOffset;
+        while (startX < CANVAS_WIDTH + totalDash) {
+          this.ctx.fillRect(startX, dividerY1, dashWidth, 8);
+          this.ctx.fillRect(startX, dividerY2, dashWidth, 8);
+          startX += totalDash;
+        }
+
+        // Bottom curb
+        this.ctx.fillStyle = '#dcd8ba';
+        this.ctx.fillRect(0, bottomCurbY, CANVAS_WIDTH, 6);
+      }
+    }
+
+    drawMoonRoad() {
+      // Dark lunar regolith terrain (NO standard road/asphalt!)
+      this.ctx.fillStyle = '#1c1e28';
       this.ctx.fillRect(0, ROAD_TOP_Y + 18, CANVAS_WIDTH, CANVAS_HEIGHT - (ROAD_TOP_Y + 18));
 
-      // Lane dividers
+      // Scrolling terrain impact craters of various sizes
+      const craterSpacing = 300;
+      const offset = (this.roadDashesOffset * 2.2) % craterSpacing;
+      for (let x = -offset - 60; x < CANVAS_WIDTH + 160; x += craterSpacing) {
+        this.drawTerrainCrater(x + 50, ROAD_TOP_Y + 45, 26, 12);
+        this.drawTerrainCrater(x + 200, ROAD_TOP_Y + 150, 38, 16);
+        this.drawTerrainCrater(x + 110, ROAD_TOP_Y + 250, 30, 13);
+      }
+
+      // Floating holographic cyan laser pulse beacons marking the lanes
       const dividerY1 = 305;
       const dividerY2 = 415;
-      const bottomCurbY = 525;
+      const dashWidth = 42;
+      const dashGap = 78;
+      const totalDash = dashWidth + dashGap;
 
+      let startX = -this.roadDashesOffset;
+      this.ctx.save();
+      this.ctx.fillStyle = '#00f0ff';
+      this.ctx.shadowColor = '#00f0ff';
+      this.ctx.shadowBlur = 8;
+      while (startX < CANVAS_WIDTH + totalDash) {
+        // Glowing laser pulse line
+        this.ctx.fillRect(startX, dividerY1 + 2, dashWidth, 4);
+        this.ctx.fillRect(startX, dividerY2 + 2, dashWidth, 4);
+        // Diamond crystal tip
+        this.ctx.beginPath();
+        this.ctx.arc(startX + dashWidth, dividerY1 + 4, 3, 0, Math.PI * 2);
+        this.ctx.arc(startX + dashWidth, dividerY2 + 4, 3, 0, Math.PI * 2);
+        this.ctx.fill();
+        startX += totalDash;
+      }
+      this.ctx.restore();
+
+      // Bottom lunar rock ridge
+      this.ctx.fillStyle = '#2d3242';
+      this.ctx.fillRect(0, 525, CANVAS_WIDTH, 6);
+      this.ctx.fillStyle = 'rgba(0, 240, 255, 0.45)';
+      this.ctx.fillRect(0, 524, CANVAS_WIDTH, 2);
+    }
+
+    drawTerrainCrater(cx, cy, rx, ry) {
+      this.ctx.save();
+      // Sunlit rim highlight
+      this.ctx.fillStyle = '#3a3f52';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy + 1, rx + 2, ry + 1, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+      // Dark shadowed crater basin
+      this.ctx.fillStyle = '#101116';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+      // Inner dust texture
+      this.ctx.fillStyle = '#161822';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx - rx * 0.2, cy - ry * 0.2, rx * 0.6, ry * 0.5, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.restore();
+    }
+
+    drawDesertRoad() {
+      // Sun-baked desert earth and sand
+      const grad = this.ctx.createLinearGradient(0, ROAD_TOP_Y + 18, 0, CANVAS_HEIGHT);
+      grad.addColorStop(0, '#ab8859');
+      grad.addColorStop(1, '#8f6e43');
+      this.ctx.fillStyle = grad;
+      this.ctx.fillRect(0, ROAD_TOP_Y + 18, CANVAS_WIDTH, CANVAS_HEIGHT - (ROAD_TOP_Y + 18));
+
+      // Desert sand ruts and double tire tracks
+      const dividerY1 = 305;
+      const dividerY2 = 415;
       const dashWidth = 65;
       const dashGap = 55;
       const totalDash = dashWidth + dashGap;
 
-      this.ctx.fillStyle = dashColor;
-
       let startX = -this.roadDashesOffset;
       while (startX < CANVAS_WIDTH + totalDash) {
-        this.ctx.fillRect(startX, dividerY1, dashWidth, 8);
-        this.ctx.fillRect(startX, dividerY2, dashWidth, 8);
+        this.ctx.fillStyle = '#6e5130';
+        this.ctx.fillRect(startX, dividerY1, dashWidth, 3);
+        this.ctx.fillRect(startX, dividerY1 + 5, dashWidth, 3);
+        this.ctx.fillRect(startX, dividerY2, dashWidth, 3);
+        this.ctx.fillRect(startX, dividerY2 + 5, dashWidth, 3);
+        this.ctx.fillStyle = '#cfb084';
+        this.ctx.fillRect(startX, dividerY1 + 8, dashWidth, 2);
+        this.ctx.fillRect(startX, dividerY2 + 8, dashWidth, 2);
         startX += totalDash;
       }
 
-      // Continuous bottom road curb line
-      this.ctx.fillStyle = bottomCurbColor;
-      this.ctx.fillRect(0, bottomCurbY, CANVAS_WIDTH, 6);
+      this.ctx.fillStyle = '#bfa177';
+      this.ctx.fillRect(0, 525, CANVAS_WIDTH, 6);
+    }
+
+    drawJungleRoad() {
+      // Wet rainforest soil
+      const grad = this.ctx.createLinearGradient(0, ROAD_TOP_Y + 18, 0, CANVAS_HEIGHT);
+      grad.addColorStop(0, '#2b3829');
+      grad.addColorStop(1, '#1b2419');
+      this.ctx.fillStyle = grad;
+      this.ctx.fillRect(0, ROAD_TOP_Y + 18, CANVAS_WIDTH, CANVAS_HEIGHT - (ROAD_TOP_Y + 18));
+
+      // Creeping jungle vine lane markers
+      const dividerY1 = 305;
+      const dividerY2 = 415;
+      const dashWidth = 60;
+      const dashGap = 60;
+      const totalDash = dashWidth + dashGap;
+
+      let startX = -this.roadDashesOffset;
+      while (startX < CANVAS_WIDTH + totalDash) {
+        this.ctx.fillStyle = '#3a5732';
+        this.ctx.fillRect(startX, dividerY1 + 1, dashWidth, 6);
+        this.ctx.fillRect(startX, dividerY2 + 1, dashWidth, 6);
+        this.ctx.fillStyle = '#7db86a';
+        this.ctx.fillRect(startX + 10, dividerY1, 14, 3);
+        this.ctx.fillRect(startX + 35, dividerY1 + 4, 12, 3);
+        this.ctx.fillRect(startX + 15, dividerY2, 14, 3);
+        this.ctx.fillRect(startX + 40, dividerY2 + 4, 12, 3);
+        startX += totalDash;
+      }
+
+      this.ctx.fillStyle = '#1c4520';
+      this.ctx.fillRect(0, 525, CANVAS_WIDTH, 6);
     }
 
     renderPlayer() {
@@ -2038,18 +2156,11 @@
     }
 
     renderCollectibles() {
+      const lvl = this.currentLevelKey;
+
       this.collectibles.forEach(item => {
         if (item.type === 'gold_tire') {
-          const spriteKey = `gold_tire_${item.frame}`;
-          const sprite = assets[spriteKey] || assets.gold_tire_0;
-          if (sprite && sprite.complete) {
-            this.ctx.drawImage(sprite, item.x, item.y, item.width, item.height);
-          } else {
-            this.ctx.fillStyle = '#ffd700';
-            this.ctx.beginPath();
-            this.ctx.arc(item.x + 16, item.y + 16, 14, 0, Math.PI * 2);
-            this.ctx.fill();
-          }
+          this.drawThemedGoldTire(item, lvl);
         } else if (item.type === 'shield') {
           const sprite = assets.powerup_shield;
           if (sprite && sprite.complete) {
@@ -2075,35 +2186,955 @@
       });
     }
 
-    renderObstacles() {
-      this.obstacles.forEach(obs => {
-        if (obs.isBird) return; // Birds rendered above player in layer 6
+    drawThemedGoldTire(item, lvl) {
+      const cx = item.x + item.width / 2;
+      const cy = item.y + item.height / 2;
+      const r = 14;
 
-        const sprite = assets[obs.type];
+      this.ctx.save();
+
+      if (lvl === 'moon') {
+        // Zero-G cosmic tire with cyan gravitational ring
+        this.ctx.strokeStyle = '#00f0ff';
+        this.ctx.lineWidth = 2;
+        this.ctx.shadowColor = '#00f0ff';
+        this.ctx.shadowBlur = 8;
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx, cy, 18, 7, this.gameTime * 2.5, 0, Math.PI * 2);
+        this.ctx.stroke();
+
+        this.ctx.shadowBlur = 4;
+        this.ctx.fillStyle = '#ffd700';
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = '#0b0c10';
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.fillStyle = '#00f0ff';
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+        this.ctx.fill();
+
+      } else if (lvl === 'desert') {
+        // Solar-forged desert relic tire
+        this.ctx.fillStyle = '#ffd700';
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#ff9900';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = '#5c3500';
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillRect(cx - 2, cy - r + 3, 4, 3);
+
+      } else if (lvl === 'jungle') {
+        // Ancient gold tire with emerald crystal
+        this.ctx.fillStyle = '#ffd700';
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = '#00ff88';
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillRect(cx - 1, cy - 3, 2, 2);
+
+      } else {
+        // Highway: original animated sprite
+        const spriteKey = `gold_tire_${item.frame}`;
+        const sprite = assets[spriteKey] || assets.gold_tire_0;
         if (sprite && sprite.complete) {
-          this.ctx.drawImage(sprite, obs.x, obs.y, obs.width, obs.height);
+          this.ctx.drawImage(sprite, item.x, item.y, item.width, item.height);
         } else {
-          // Procedural fallback
-          this.ctx.fillStyle = obs.isCar ? '#cc2233' : '#444444';
-          this.ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+          this.ctx.fillStyle = '#ffd700';
+          this.ctx.beginPath();
+          this.ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+      }
+
+      this.ctx.restore();
+    }
+
+    renderObstacles() {
+      const lvl = this.currentLevelKey;
+
+      this.obstacles.forEach(obs => {
+        if (obs.isBird) return; // Handled in renderFlyingObstacles
+
+        if (lvl === 'moon') {
+          if (obs.isCar) {
+            this.drawMoonUFO(obs);
+          } else if (obs.type === 'nails') {
+            this.drawMoonRocks(obs);
+          } else if (obs.type === 'puddle') {
+            this.drawPlasmaCrater(obs);
+          } else if (obs.type === 'pothole') {
+            this.drawMoonCrater(obs);
+          } else if (obs.type === 'barricade') {
+            this.drawMoonLander(obs);
+          }
+        } else if (lvl === 'desert') {
+          if (obs.isCar) {
+            this.drawDesertBuggy(obs);
+          } else if (obs.type === 'nails') {
+            this.drawCactus(obs);
+          } else if (obs.type === 'puddle') {
+            this.drawQuicksand(obs);
+          } else if (obs.type === 'pothole') {
+            this.drawFissure(obs);
+          } else if (obs.type === 'barricade') {
+            this.drawDesertSkull(obs);
+          }
+        } else if (lvl === 'jungle') {
+          if (obs.isCar) {
+            this.drawSafariJeep(obs);
+          } else if (obs.type === 'nails') {
+            this.drawJungleThorns(obs);
+          } else if (obs.type === 'puddle') {
+            this.drawMudPool(obs);
+          } else if (obs.type === 'pothole') {
+            this.drawHollowLog(obs);
+          } else if (obs.type === 'barricade') {
+            this.drawJungleTotem(obs);
+          }
+        } else {
+          // Highway: classic sprites
+          const sprite = assets[obs.type];
+          if (sprite && sprite.complete) {
+            this.ctx.drawImage(sprite, obs.x, obs.y, obs.width, obs.height);
+          } else {
+            this.ctx.fillStyle = obs.isCar ? '#cc2233' : '#444444';
+            this.ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+          }
         }
       });
     }
 
     renderFlyingObstacles() {
+      const lvl = this.currentLevelKey;
+
       this.obstacles.forEach(obs => {
         if (!obs.isBird) return;
 
-        const spriteKey = obs.frame === 0 ? 'bird_0' : 'bird_1';
-        const sprite = assets[spriteKey];
-        if (sprite && sprite.complete) {
-          this.ctx.drawImage(sprite, obs.x, obs.y, obs.width, obs.height);
+        if (lvl === 'moon') {
+          this.drawMoonShootingStar(obs);
+        } else if (lvl === 'desert') {
+          this.drawDesertVulture(obs);
+        } else if (lvl === 'jungle') {
+          this.drawToucan(obs);
         } else {
-          // Fallback procedural retro bird
-          this.ctx.fillStyle = '#2d2d3c';
-          this.ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+          // Highway: retro city bird
+          const spriteKey = obs.frame === 0 ? 'bird_0' : 'bird_1';
+          const sprite = assets[spriteKey];
+          if (sprite && sprite.complete) {
+            this.ctx.drawImage(sprite, obs.x, obs.y, obs.width, obs.height);
+          } else {
+            this.ctx.fillStyle = '#2d2d3c';
+            this.ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+          }
         }
       });
+    }
+
+    // --- MOON THEMED DRAWING METHODS ---
+    drawMoonUFO(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      const w = obs.width;
+      const h = obs.height;
+      const cx = x + w * 0.48;
+      const cy = y + h * 0.58;
+
+      this.ctx.save();
+
+      // Thruster plasma flames
+      const flameLength = 26 + Math.sin(this.gameTime * 24) * 8;
+      const jetGrad = this.ctx.createLinearGradient(x + w * 0.85, cy, x + w * 0.85 + flameLength, cy);
+      jetGrad.addColorStop(0, '#00f0ff');
+      jetGrad.addColorStop(0.5, '#9d4edd');
+      jetGrad.addColorStop(1, 'rgba(157, 78, 221, 0)');
+      this.ctx.fillStyle = jetGrad;
+      this.ctx.beginPath();
+      this.ctx.ellipse(x + w * 0.88 + flameLength * 0.4, cy, flameLength * 0.5, 9, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Glass bubble dome
+      this.ctx.fillStyle = 'rgba(0, 240, 255, 0.45)';
+      this.ctx.strokeStyle = '#00f0ff';
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy - 14, 28, 20, 0, Math.PI, 0); // upper half dome
+      this.ctx.fill();
+      this.ctx.stroke();
+
+      // ALIEN inside dome!
+      // Green alien head
+      this.ctx.fillStyle = '#39e75f';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx - 2, cy - 16, 11, 13, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Antennae
+      this.ctx.strokeStyle = '#39e75f';
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.moveTo(cx - 6, cy - 26);
+      this.ctx.lineTo(cx - 10, cy - 32);
+      this.ctx.moveTo(cx + 2, cy - 26);
+      this.ctx.lineTo(cx + 6, cy - 32);
+      this.ctx.stroke();
+      // Glowing antenna tips
+      this.ctx.fillStyle = '#ff00ff';
+      this.ctx.beginPath();
+      this.ctx.arc(cx - 10, cy - 32, 2.5, 0, Math.PI * 2);
+      this.ctx.arc(cx + 6, cy - 32, 2.5, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Big black oval alien eyes
+      this.ctx.fillStyle = '#050505';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx - 6, cy - 16, 4, 6, -0.25, 0, Math.PI * 2);
+      this.ctx.ellipse(cx + 2, cy - 16, 4, 6, 0.25, 0, Math.PI * 2);
+      this.ctx.fill();
+      // Eye shine
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.beginPath();
+      this.ctx.arc(cx - 6, cy - 18, 1.2, 0, Math.PI * 2);
+      this.ctx.arc(cx + 2, cy - 18, 1.2, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Alien hands gripping the UFO control wheel
+      this.ctx.fillStyle = '#39e75f';
+      this.ctx.fillRect(cx - 10, cy - 5, 5, 5);
+      this.ctx.fillRect(cx + 2, cy - 5, 5, 5);
+      this.ctx.strokeStyle = '#ffd700';
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.arc(cx - 1, cy - 3, 8, Math.PI * 0.9, Math.PI * 0.1, true);
+      this.ctx.stroke();
+
+      // Metallic saucer disc
+      const saucerGrad = this.ctx.createLinearGradient(0, cy - 10, 0, cy + 16);
+      saucerGrad.addColorStop(0, '#e2e8f0');
+      saucerGrad.addColorStop(0.5, '#94a3b8');
+      saucerGrad.addColorStop(1, '#475569');
+      this.ctx.fillStyle = saucerGrad;
+      this.ctx.strokeStyle = '#cbd5e1';
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy, 64, 14, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.stroke();
+
+      // Rotating UFO rim lights
+      const lights = ['#ffd700', '#00f0ff', '#ff007f', '#00ff88', '#ffd700', '#00f0ff'];
+      const timeShift = Math.floor(this.gameTime * 12);
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI + (timeShift * 0.3) % (Math.PI * 2);
+        const lx = cx + Math.cos(angle) * 52;
+        const ly = cy + Math.sin(angle) * 8;
+        const col = lights[(i + timeShift) % lights.length];
+        this.ctx.fillStyle = col;
+        this.ctx.beginPath();
+        this.ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+
+      this.ctx.restore();
+    }
+
+    drawMoonShootingStar(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      const cx = x + 18;
+      const cy = y + 17;
+
+      this.ctx.save();
+
+      // Shimmering cosmic comet tail
+      const tailLength = 48;
+      const tailGrad = this.ctx.createLinearGradient(cx, cy, cx + tailLength, cy);
+      tailGrad.addColorStop(0, 'rgba(255, 230, 100, 0.9)');
+      tailGrad.addColorStop(0.3, 'rgba(0, 240, 255, 0.8)');
+      tailGrad.addColorStop(0.7, 'rgba(157, 78, 221, 0.5)');
+      tailGrad.addColorStop(1, 'rgba(157, 78, 221, 0)');
+
+      this.ctx.fillStyle = tailGrad;
+      this.ctx.beginPath();
+      this.ctx.moveTo(cx, cy - 7);
+      this.ctx.lineTo(cx + tailLength, cy - 1);
+      this.ctx.lineTo(cx + tailLength, cy + 1);
+      this.ctx.lineTo(cx, cy + 7);
+      this.ctx.closePath();
+      this.ctx.fill();
+
+      // Sparkles along tail
+      this.ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 4; i++) {
+        const sx = cx + 8 + i * 9;
+        const sy = cy + Math.sin(this.gameTime * 20 + i) * 4;
+        this.ctx.fillRect(sx, sy, 2, 2);
+      }
+
+      // Glowing 5-point brilliant shooting star
+      this.ctx.fillStyle = '#00f0ff';
+      this.ctx.shadowColor = '#00f0ff';
+      this.ctx.shadowBlur = 12;
+      this.drawStar(cx, cy, 5, 15, 7, '#ffd700');
+
+      // Inner white star core
+      this.ctx.shadowBlur = 0;
+      this.drawStar(cx, cy, 5, 8, 4, '#ffffff');
+
+      this.ctx.restore();
+    }
+
+    drawStar(cx, cy, spikes, outerRadius, innerRadius, color) {
+      let rot = Math.PI / 2 * 3;
+      let x = cx;
+      let y = cy;
+      const step = Math.PI / spikes;
+
+      this.ctx.fillStyle = color;
+      this.ctx.beginPath();
+      this.ctx.moveTo(cx, cy - outerRadius);
+      for (let i = 0; i < spikes; i++) {
+        x = cx + Math.cos(rot) * outerRadius;
+        y = cy + Math.sin(rot) * outerRadius;
+        this.ctx.lineTo(x, y);
+        rot += step;
+
+        x = cx + Math.cos(rot) * innerRadius;
+        y = cy + Math.sin(rot) * innerRadius;
+        this.ctx.lineTo(x, y);
+        rot += step;
+      }
+      this.ctx.lineTo(cx, cy - outerRadius);
+      this.ctx.closePath();
+      this.ctx.fill();
+    }
+
+    drawMoonRocks(obs) {
+      // Jagged sharp lunar meteorite shards (replaces nails)
+      this.ctx.save();
+      const x = obs.x;
+      const y = obs.y;
+
+      // Rock 1
+      this.ctx.fillStyle = '#4e5467';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 5, y + 28);
+      this.ctx.lineTo(x + 18, y + 4);
+      this.ctx.lineTo(x + 28, y + 28);
+      this.ctx.fill();
+      this.ctx.fillStyle = '#838ca6';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 18, y + 4);
+      this.ctx.lineTo(x + 24, y + 16);
+      this.ctx.lineTo(x + 18, y + 28);
+      this.ctx.fill();
+
+      // Rock 2 (tall center)
+      this.ctx.fillStyle = '#393e4f';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 25, y + 28);
+      this.ctx.lineTo(x + 40, y);
+      this.ctx.lineTo(x + 52, y + 28);
+      this.ctx.fill();
+      this.ctx.fillStyle = '#00f0ff'; // glowing crystal vein
+      this.ctx.fillRect(x + 38, y + 8, 3, 14);
+
+      // Rock 3
+      this.ctx.fillStyle = '#4e5467';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 48, y + 28);
+      this.ctx.lineTo(x + 58, y + 9);
+      this.ctx.lineTo(x + 64, y + 28);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    drawPlasmaCrater(obs) {
+      // Radioactive cosmic plasma pool (replaces puddle)
+      const cx = obs.x + obs.width / 2;
+      const cy = obs.y + obs.height / 2;
+      this.ctx.save();
+
+      // Dark rim
+      this.ctx.fillStyle = '#2b2d38';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy, 55, 14, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Glowing plasma core
+      this.ctx.fillStyle = '#00f0ff';
+      this.ctx.shadowColor = '#00f0ff';
+      this.ctx.shadowBlur = 10;
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy, 46, 10, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Inner electric purple
+      this.ctx.fillStyle = '#b5179e';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy, 32, 6, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Energy bubbles
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.beginPath();
+      this.ctx.arc(cx - 15, cy - 2, 2.5, 0, Math.PI * 2);
+      this.ctx.arc(cx + 12, cy + 1, 2, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    drawMoonCrater(obs) {
+      // Deep 3D impact crater (replaces pothole)
+      const cx = obs.x + obs.width / 2;
+      const cy = obs.y + obs.height / 2;
+      this.ctx.save();
+
+      // Sun-highlighted ridge
+      this.ctx.fillStyle = '#4f556b';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy + 2, 45, 17, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Shadowed interior
+      this.ctx.fillStyle = '#0b0c10';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy, 42, 14, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Crater bottom dust
+      this.ctx.fillStyle = '#161922';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx - 10, cy - 3, 26, 8, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    drawMoonLander(obs) {
+      // Lunar exploration lander / beacon probe (replaces barricade)
+      const x = obs.x;
+      const y = obs.y;
+      this.ctx.save();
+
+      // Gold foil insulated core
+      this.ctx.fillStyle = '#d4af37';
+      this.ctx.fillRect(x + 10, y + 25, 30, 24);
+      this.ctx.fillStyle = '#fff08a';
+      this.ctx.fillRect(x + 12, y + 27, 10, 8);
+
+      // Probe antenna & satellite dish
+      this.ctx.strokeStyle = '#e2e8f0';
+      this.ctx.lineWidth = 2.5;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 25, y + 25);
+      this.ctx.lineTo(x + 25, y + 6);
+      this.ctx.stroke();
+
+      // Dish
+      this.ctx.fillStyle = '#cbd5e1';
+      this.ctx.beginPath();
+      this.ctx.ellipse(x + 25, y + 10, 10, 4, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Blinking red beacon on top
+      this.ctx.fillStyle = Math.floor(this.gameTime * 6) % 2 === 0 ? '#ff0055' : '#55001a';
+      this.ctx.beginPath();
+      this.ctx.arc(x + 25, y + 5, 3.5, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Landing struts / tripod feet
+      this.ctx.strokeStyle = '#94a3b8';
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 10, y + 45);
+      this.ctx.lineTo(x + 2, y + 58);
+      this.ctx.moveTo(x + 40, y + 45);
+      this.ctx.lineTo(x + 48, y + 58);
+      this.ctx.stroke();
+
+      // Foot pads
+      this.ctx.fillStyle = '#64748b';
+      this.ctx.fillRect(x, y + 56, 8, 3);
+      this.ctx.fillRect(x + 44, y + 56, 8, 3);
+
+      this.ctx.restore();
+    }
+
+    // --- DESERT THEMED DRAWING METHODS ---
+    drawDesertBuggy(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      const w = obs.width;
+      const h = obs.height;
+      this.ctx.save();
+
+      // Giant knobby off-road wheels
+      const wheelR = 15;
+      const frontWheelX = x + 35;
+      const rearWheelX = x + w - 35;
+      const wheelY = y + h - 12;
+
+      // Exhaust dust puff
+      this.ctx.fillStyle = 'rgba(210, 180, 140, 0.7)';
+      this.ctx.beginPath();
+      this.ctx.arc(x + w + 10, wheelY - 5, 12, 0, Math.PI * 2);
+      this.ctx.arc(x + w + 22, wheelY - 8, 8, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Chassis body (Bright desert orange)
+      this.ctx.fillStyle = '#ff6600';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 15, y + h - 18);
+      this.ctx.lineTo(x + 35, y + 25);
+      this.ctx.lineTo(x + w - 30, y + 25);
+      this.ctx.lineTo(x + w - 10, y + h - 18);
+      this.ctx.closePath();
+      this.ctx.fill();
+
+      // Yellow racing stripe
+      this.ctx.fillStyle = '#ffd700';
+      this.ctx.fillRect(x + 35, y + 30, w - 65, 6);
+
+      // Black tubular roll cage
+      this.ctx.strokeStyle = '#1a1a1a';
+      this.ctx.lineWidth = 3;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 42, y + 25);
+      this.ctx.lineTo(x + 55, y + 8);
+      this.ctx.lineTo(x + w - 45, y + 8);
+      this.ctx.lineTo(x + w - 35, y + 25);
+      this.ctx.stroke();
+
+      // Driver helmet
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.beginPath();
+      this.ctx.arc(x + 75, y + 18, 7, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.fillStyle = '#111';
+      this.ctx.fillRect(x + 70, y + 16, 8, 3); // visor
+
+      // Wheels
+      [frontWheelX, rearWheelX].forEach(wx => {
+        this.ctx.fillStyle = '#1a1a1a';
+        this.ctx.beginPath();
+        this.ctx.arc(wx, wheelY, wheelR, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.fillStyle = '#e2e8f0';
+        this.ctx.beginPath();
+        this.ctx.arc(wx, wheelY, 6, 0, Math.PI * 2);
+        this.ctx.fill();
+      });
+
+      this.ctx.restore();
+    }
+
+    drawDesertVulture(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      this.ctx.save();
+
+      const wingUp = obs.frame === 0;
+
+      // Dark brown/black plumage wings
+      this.ctx.fillStyle = '#2b211a';
+      this.ctx.beginPath();
+      if (wingUp) {
+        this.ctx.moveTo(x + 27, y + 16);
+        this.ctx.lineTo(x + 5, y + 2);
+        this.ctx.lineTo(x + 22, y + 18);
+        this.ctx.lineTo(x + 48, y + 2);
+        this.ctx.lineTo(x + 33, y + 16);
+      } else {
+        this.ctx.moveTo(x + 27, y + 16);
+        this.ctx.lineTo(x + 5, y + 30);
+        this.ctx.lineTo(x + 22, y + 18);
+        this.ctx.lineTo(x + 48, y + 30);
+        this.ctx.lineTo(x + 33, y + 16);
+      }
+      this.ctx.fill();
+
+      // Body
+      this.ctx.fillStyle = '#1a1410';
+      this.ctx.beginPath();
+      this.ctx.ellipse(x + 27, y + 18, 12, 6, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Red bald neck
+      this.ctx.fillStyle = '#d90429';
+      this.ctx.beginPath();
+      this.ctx.ellipse(x + 14, y + 18, 5, 4, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Hooked yellow beak
+      this.ctx.fillStyle = '#ffb703';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 10, y + 17);
+      this.ctx.lineTo(x + 4, y + 21);
+      this.ctx.lineTo(x + 10, y + 21);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    drawCactus(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      this.ctx.save();
+
+      // Green Saguaro cactus
+      this.ctx.fillStyle = '#2d7a3f';
+      this.ctx.fillRect(x + 26, y + 4, 12, 24);
+      // Arms
+      this.ctx.fillRect(x + 14, y + 10, 12, 5);
+      this.ctx.fillRect(x + 14, y + 6, 5, 8);
+      this.ctx.fillRect(x + 38, y + 14, 12, 5);
+      this.ctx.fillRect(x + 45, y + 9, 5, 9);
+
+      // Yellow needles
+      this.ctx.fillStyle = '#ffd700';
+      this.ctx.fillRect(x + 24, y + 8, 2, 2);
+      this.ctx.fillRect(x + 38, y + 18, 2, 2);
+      this.ctx.fillRect(x + 30, y + 15, 2, 2);
+
+      // Pink desert blossoms
+      this.ctx.fillStyle = '#ff007f';
+      this.ctx.beginPath();
+      this.ctx.arc(x + 32, y + 3, 3, 0, Math.PI * 2);
+      this.ctx.arc(x + 16, y + 5, 2.5, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    drawQuicksand(obs) {
+      const cx = obs.x + obs.width / 2;
+      const cy = obs.y + obs.height / 2;
+      this.ctx.save();
+
+      // Swirling sand vortex
+      this.ctx.fillStyle = '#825e36';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy, 55, 14, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.fillStyle = '#5c4122';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy, 38, 9, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.fillStyle = '#3d2813';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy, 20, 5, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    drawFissure(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      this.ctx.save();
+
+      // Deep sun-baked ground fissure
+      this.ctx.fillStyle = '#241408';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 4, y + 16);
+      this.ctx.lineTo(x + 22, y + 4);
+      this.ctx.lineTo(x + 45, y + 26);
+      this.ctx.lineTo(x + 65, y + 6);
+      this.ctx.lineTo(x + 85, y + 18);
+      this.ctx.lineTo(x + 75, y + 28);
+      this.ctx.lineTo(x + 40, y + 34);
+      this.ctx.lineTo(x + 18, y + 24);
+      this.ctx.closePath();
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    drawDesertSkull(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      this.ctx.save();
+
+      // Rock pile
+      this.ctx.fillStyle = '#876947';
+      this.ctx.beginPath();
+      this.ctx.ellipse(x + 25, y + 45, 22, 12, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Steer skull (white)
+      this.ctx.fillStyle = '#f8f9fa';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 16, y + 22);
+      this.ctx.lineTo(x + 34, y + 22);
+      this.ctx.lineTo(x + 28, y + 38);
+      this.ctx.lineTo(x + 22, y + 38);
+      this.ctx.closePath();
+      this.ctx.fill();
+
+      // Horns
+      this.ctx.strokeStyle = '#e9ecef';
+      this.ctx.lineWidth = 3.5;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 20, y + 24);
+      this.ctx.quadraticCurveTo(x + 4, y + 18, x + 2, y + 8);
+      this.ctx.moveTo(x + 30, y + 24);
+      this.ctx.quadraticCurveTo(x + 46, y + 18, x + 48, y + 8);
+      this.ctx.stroke();
+
+      // Eye sockets
+      this.ctx.fillStyle = '#111';
+      this.ctx.fillRect(x + 20, y + 26, 3, 3);
+      this.ctx.fillRect(x + 27, y + 26, 3, 3);
+
+      this.ctx.restore();
+    }
+
+    // --- JUNGLE THEMED DRAWING METHODS ---
+    drawSafariJeep(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      const w = obs.width;
+      const h = obs.height;
+      this.ctx.save();
+
+      // Olive-green safari body
+      this.ctx.fillStyle = '#3d5a31';
+      this.ctx.fillRect(x + 16, y + 18, w - 32, 28);
+      // Yellow safari accent stripe
+      this.ctx.fillStyle = '#ffd166';
+      this.ctx.fillRect(x + 16, y + 34, w - 32, 4);
+
+      // Safari roof rack & canopy
+      this.ctx.strokeStyle = '#1e281b';
+      this.ctx.lineWidth = 3;
+      this.ctx.strokeRect(x + 32, y + 6, w - 64, 14);
+      // Spare tire on roof
+      this.ctx.fillStyle = '#111';
+      this.ctx.beginPath();
+      this.ctx.ellipse(x + 55, y + 10, 12, 5, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Glowing round yellow headlights
+      this.ctx.fillStyle = '#ffee32';
+      this.ctx.shadowColor = '#ffee32';
+      this.ctx.shadowBlur = 8;
+      this.ctx.beginPath();
+      this.ctx.arc(x + 16, y + 28, 5, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.shadowBlur = 0;
+
+      // Heavy mud-terrain wheels
+      const wheelY = y + h - 12;
+      [x + 38, x + w - 38].forEach(wx => {
+        this.ctx.fillStyle = '#111';
+        this.ctx.beginPath();
+        this.ctx.arc(wx, wheelY, 14, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.fillStyle = '#6c757d';
+        this.ctx.beginPath();
+        this.ctx.arc(wx, wheelY, 5, 0, Math.PI * 2);
+        this.ctx.fill();
+      });
+
+      this.ctx.restore();
+    }
+
+    drawToucan(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      this.ctx.save();
+
+      const wingUp = obs.frame === 0;
+
+      // Black body
+      this.ctx.fillStyle = '#111';
+      this.ctx.beginPath();
+      this.ctx.ellipse(x + 28, y + 18, 14, 8, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Wing
+      this.ctx.fillStyle = '#1e242b';
+      this.ctx.beginPath();
+      if (wingUp) {
+        this.ctx.ellipse(x + 28, y + 8, 12, 6, -0.3, 0, Math.PI * 2);
+      } else {
+        this.ctx.ellipse(x + 28, y + 26, 12, 6, 0.3, 0, Math.PI * 2);
+      }
+      this.ctx.fill();
+
+      // White chest ruff
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.beginPath();
+      this.ctx.arc(x + 20, y + 17, 6, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Giant colorful toucan beak!
+      this.ctx.fillStyle = '#ffb703';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 16, y + 13);
+      this.ctx.quadraticCurveTo(x + 2, y + 12, x, y + 19);
+      this.ctx.quadraticCurveTo(x + 6, y + 24, x + 16, y + 21);
+      this.ctx.closePath();
+      this.ctx.fill();
+
+      // Red beak tip
+      this.ctx.fillStyle = '#e63946';
+      this.ctx.beginPath();
+      this.ctx.arc(x + 4, y + 18, 3, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Eye
+      this.ctx.fillStyle = '#00f0ff';
+      this.ctx.beginPath();
+      this.ctx.arc(x + 19, y + 15, 2, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    drawJungleThorns(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      this.ctx.save();
+
+      // Carnivorous thorn vines
+      this.ctx.strokeStyle = '#2d5a27';
+      this.ctx.lineWidth = 4;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 4, y + 28);
+      this.ctx.quadraticCurveTo(x + 20, y + 6, x + 35, y + 26);
+      this.ctx.quadraticCurveTo(x + 48, y + 8, x + 60, y + 28);
+      this.ctx.stroke();
+
+      // Purple thorns
+      this.ctx.fillStyle = '#7b2cbf';
+      for (let i = 0; i < 4; i++) {
+        const tx = x + 12 + i * 12;
+        const ty = y + 12 + (i % 2 === 0 ? -4 : 6);
+        this.ctx.beginPath();
+        this.ctx.moveTo(tx, ty);
+        this.ctx.lineTo(tx + 4, ty - 8);
+        this.ctx.lineTo(tx + 8, ty);
+        this.ctx.fill();
+      }
+
+      this.ctx.restore();
+    }
+
+    drawMudPool(obs) {
+      const cx = obs.x + obs.width / 2;
+      const cy = obs.y + obs.height / 2;
+      this.ctx.save();
+
+      // Thick brown jungle mud
+      this.ctx.fillStyle = '#3a2b1c';
+      this.ctx.beginPath();
+      this.ctx.ellipse(cx, cy, 55, 14, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Floating lily pad
+      this.ctx.fillStyle = '#40916c';
+      this.ctx.beginPath();
+      this.ctx.arc(cx - 16, cy - 2, 8, 0, Math.PI * 1.8);
+      this.ctx.fill();
+
+      // Pink tropical water blossom
+      this.ctx.fillStyle = '#ff758f';
+      this.ctx.beginPath();
+      this.ctx.arc(cx - 16, cy - 2, 3, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Mud bubbles
+      this.ctx.fillStyle = '#523d28';
+      this.ctx.beginPath();
+      this.ctx.arc(cx + 18, cy + 1, 4, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    drawHollowLog(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      this.ctx.save();
+
+      // Fallen hollow tree trunk
+      this.ctx.fillStyle = '#4a3728';
+      this.ctx.beginPath();
+      this.ctx.roundRect(x + 4, y + 8, 82, 22, 6);
+      this.ctx.fill();
+
+      // Hollow dark hole in center
+      this.ctx.fillStyle = '#1c130c';
+      this.ctx.beginPath();
+      this.ctx.ellipse(x + 14, y + 19, 8, 8, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Moss top
+      this.ctx.fillStyle = '#52b788';
+      this.ctx.fillRect(x + 18, y + 8, 52, 4);
+
+      // Orange mushrooms
+      this.ctx.fillStyle = '#ff7b00';
+      this.ctx.beginPath();
+      this.ctx.arc(x + 45, y + 6, 4, Math.PI, 0);
+      this.ctx.arc(x + 55, y + 7, 3, Math.PI, 0);
+      this.ctx.fill();
+
+      this.ctx.restore();
+    }
+
+    drawJungleTotem(obs) {
+      const x = obs.x;
+      const y = obs.y;
+      this.ctx.save();
+
+      // Ancient carved stone idol
+      this.ctx.fillStyle = '#405342';
+      this.ctx.fillRect(x + 8, y + 8, 34, 50);
+
+      // Stone headdress
+      this.ctx.fillStyle = '#2f3e31';
+      this.ctx.fillRect(x + 4, y + 4, 42, 8);
+
+      // Glowing emerald eyes
+      this.ctx.fillStyle = '#00ff88';
+      this.ctx.shadowColor = '#00ff88';
+      this.ctx.shadowBlur = 8;
+      this.ctx.fillRect(x + 14, y + 20, 7, 5);
+      this.ctx.fillRect(x + 29, y + 20, 7, 5);
+      this.ctx.shadowBlur = 0;
+
+      // Carved mouth and teeth
+      this.ctx.fillStyle = '#1c241d';
+      this.ctx.fillRect(x + 16, y + 36, 18, 8);
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.fillRect(x + 18, y + 36, 4, 4);
+      this.ctx.fillRect(x + 26, y + 36, 4, 4);
+
+      this.ctx.restore();
     }
 
     renderParticles() {
