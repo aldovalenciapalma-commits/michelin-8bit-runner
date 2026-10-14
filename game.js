@@ -16,12 +16,22 @@
       this.masterGain = null;
       this.onTrackChange = null;
 
-      // Soundtrack playlist (loops infinitely track by track)
+      // Soundtrack playlist (loops infinitely track by track in random order)
       this.playlist = [
         {
           title: 'One More Quarter',
           file: 'One_More_Quarter.mp3',
           altFile: 'assets/One_More_Quarter.mp3'
+        },
+        {
+          title: 'High Noon Overload',
+          file: 'High_Noon_Overload.mp3',
+          altFile: 'assets/High_Noon_Overload.mp3'
+        },
+        {
+          title: 'Temple Canopy Run',
+          file: 'Temple_Canopy_Run.mp3',
+          altFile: 'assets/Temple_Canopy_Run.mp3'
         },
         {
           title: 'Lunar Horizon Sprint',
@@ -34,13 +44,19 @@
           altFile: 'assets/Lunar_Velocity.mp3'
         }
       ];
-      this.currentTrackIndex = 0;
+      this.shuffleQueue = [];
+      this.queueIndex = 0;
       this.isTryingFallback = false;
 
+      // Generate initial random sequence
+      this.generateShuffleQueue();
+
+      const initialTrack = this.getCurrentTrack();
       this.bgMusic = document.getElementById('bgAudio');
       if (!this.bgMusic) {
         this.bgMusic = new Audio();
       }
+      this.bgMusic.src = initialTrack.file;
       this.bgMusic.volume = 0.75;
       this.bgMusic.loop = false; // Only the native 'ended' event will cycle to the next song!
 
@@ -67,17 +83,46 @@
       this.setupAutoUnlock();
     }
 
+    generateShuffleQueue(excludeTrackTitle = null) {
+      const indices = this.playlist.map((_, i) => i);
+      // Fisher-Yates shuffle
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = indices[i];
+        indices[i] = indices[j];
+        indices[j] = temp;
+      }
+      // Avoid playing the exact same song back-to-back across shuffle cycles
+      if (excludeTrackTitle && this.playlist.length > 1 && this.playlist[indices[0]].title === excludeTrackTitle) {
+        const swapWith = 1 + Math.floor(Math.random() * (indices.length - 1));
+        const temp = indices[0];
+        indices[0] = indices[swapWith];
+        indices[swapWith] = temp;
+      }
+      this.shuffleQueue = indices;
+      this.queueIndex = 0;
+    }
+
     getCurrentTrack() {
-      return this.playlist[this.currentTrackIndex] || this.playlist[0];
+      if (!this.shuffleQueue || this.shuffleQueue.length === 0) {
+        this.generateShuffleQueue();
+      }
+      const trackIndex = this.shuffleQueue[this.queueIndex] ?? 0;
+      return this.playlist[trackIndex] || this.playlist[0];
     }
 
     nextTrack() {
-      this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length;
+      const currentTrack = this.getCurrentTrack();
+      this.queueIndex++;
+      if (this.queueIndex >= this.shuffleQueue.length) {
+        this.generateShuffleQueue(currentTrack ? currentTrack.title : null);
+      }
       this.loadAndPlayCurrentTrack();
     }
 
     prevTrack() {
-      this.currentTrackIndex = (this.currentTrackIndex - 1 + this.playlist.length) % this.playlist.length;
+      if (!this.shuffleQueue || this.shuffleQueue.length === 0) return;
+      this.queueIndex = (this.queueIndex - 1 + this.shuffleQueue.length) % this.shuffleQueue.length;
       this.loadAndPlayCurrentTrack();
     }
 
@@ -106,7 +151,7 @@
       }
 
       if (typeof this.onTrackChange === 'function') {
-        this.onTrackChange(track, this.currentTrackIndex, this.playlist.length);
+        this.onTrackChange(track, this.queueIndex, this.playlist.length);
       }
     }
 
@@ -955,7 +1000,7 @@
         });
       }
 
-      this.handleTrackChange(this.sound.getCurrentTrack(), 0, this.sound.playlist.length);
+      this.handleTrackChange(this.sound.getCurrentTrack(), this.sound.queueIndex, this.sound.playlist.length);
       this.updateHeaderButtons();
     }
 
@@ -1167,9 +1212,10 @@
         this.dom.btnSound.title = `Pista actual: ${track.title} (Clic para silenciar / activar)`;
       }
       if (this.dom.btnNextTrack) {
-        const nextIdx = (index + 1) % total;
-        const nextTitle = (this.sound.playlist[nextIdx] && this.sound.playlist[nextIdx].title) || '';
-        this.dom.btnNextTrack.title = `Siguiente canción: ${nextTitle} (Bucle de ${total} temas)`;
+        const nextQueueIdx = (this.sound.queueIndex + 1) % (this.sound.shuffleQueue.length || 1);
+        const nextPlaylistIdx = this.sound.shuffleQueue[nextQueueIdx];
+        const nextTitle = (this.sound.playlist[nextPlaylistIdx] && this.sound.playlist[nextPlaylistIdx].title) || '';
+        this.dom.btnNextTrack.title = `Siguiente canción: ${nextTitle} (Aleatorio - ${total} temas)`;
       }
     }
 
