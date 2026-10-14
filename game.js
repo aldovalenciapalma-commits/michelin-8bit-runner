@@ -10,40 +10,111 @@
   class SoundManager {
     constructor() {
       this.ctx = null;
-      this.bgMusic = document.getElementById('bgAudio');
       this.musicEnabled = true;
       this.sfxEnabled = true;
       this.musicStarted = false;
       this.masterGain = null;
+      this.onTrackChange = null;
 
+      // Soundtrack playlist (loops infinitely track by track)
+      this.playlist = [
+        {
+          title: 'One More Quarter',
+          file: 'One_More_Quarter.mp3',
+          altFile: 'assets/One_More_Quarter.mp3'
+        },
+        {
+          title: 'Lunar Horizon Sprint',
+          file: 'Lunar_Horizon_Sprint.mp3',
+          altFile: 'assets/Lunar_Horizon_Sprint.mp3'
+        },
+        {
+          title: 'Lunar Velocity',
+          file: 'Lunar_Velocity.mp3',
+          altFile: 'assets/Lunar_Velocity.mp3'
+        }
+      ];
+      this.currentTrackIndex = 0;
+      this.isTryingFallback = false;
+
+      this.bgMusic = document.getElementById('bgAudio');
       if (!this.bgMusic) {
-        this.bgMusic = new Audio('One_More_Quarter.mp3');
+        this.bgMusic = new Audio();
       }
-
       this.bgMusic.volume = 0.75;
-      this.bgMusic.loop = true;
+      this.bgMusic.loop = false; // We use the 'ended' event to advance to the next track in an endless playlist loop!
 
-      // Handle loop and fallback error
+      // When the current song finishes, automatically advance to the next song in the playlist loop
       this.bgMusic.addEventListener('ended', () => {
         if (this.musicEnabled) {
-          this.bgMusic.currentTime = 0;
-          this.bgMusic.play().catch(() => {});
+          this.nextTrack();
         }
       });
 
+      // Fallback error handler
       this.bgMusic.addEventListener('error', () => {
-        console.warn('Audio tag error, trying fallback to assets/One_More_Quarter.mp3');
-        if (this.bgMusic.src && !this.bgMusic.src.includes('assets/')) {
-          this.bgMusic.src = 'assets/One_More_Quarter.mp3';
+        const track = this.getCurrentTrack();
+        if (!this.isTryingFallback && track && track.altFile) {
+          this.isTryingFallback = true;
+          this.bgMusic.src = track.altFile;
           this.bgMusic.load();
           if (this.musicEnabled) {
             this.bgMusic.play().catch(() => {});
           }
+        } else {
+          console.warn('Track playback failed, advancing to next song in loop:', track ? track.title : '');
+          this.isTryingFallback = false;
+          if (this.musicEnabled) {
+            this.nextTrack();
+          }
         }
       });
 
-      // Global one-time unlocker on ANY interaction (click, key, touch)
+      // Global one-time unlocker on ANY user interaction
       this.setupAutoUnlock();
+    }
+
+    getCurrentTrack() {
+      return this.playlist[this.currentTrackIndex] || this.playlist[0];
+    }
+
+    nextTrack() {
+      this.currentTrackIndex = (this.currentTrackIndex + 1) % this.playlist.length;
+      this.loadAndPlayCurrentTrack();
+    }
+
+    prevTrack() {
+      this.currentTrackIndex = (this.currentTrackIndex - 1 + this.playlist.length) % this.playlist.length;
+      this.loadAndPlayCurrentTrack();
+    }
+
+    loadAndPlayCurrentTrack() {
+      this.isTryingFallback = false;
+      const track = this.getCurrentTrack();
+      if (!this.bgMusic) {
+        this.bgMusic = document.getElementById('bgAudio') || new Audio();
+      }
+      this.bgMusic.loop = false;
+      this.bgMusic.volume = 0.75;
+      this.bgMusic.src = track.file;
+      this.bgMusic.load();
+
+      if (this.musicEnabled) {
+        const playPromise = this.bgMusic.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              this.musicStarted = true;
+            })
+            .catch((err) => {
+              console.log('Audio autoplay waiting for user gesture:', err);
+            });
+        }
+      }
+
+      if (typeof this.onTrackChange === 'function') {
+        this.onTrackChange(track, this.currentTrackIndex, this.playlist.length);
+      }
     }
 
     setupAutoUnlock() {
@@ -79,30 +150,39 @@
     playMusic() {
       if (!this.musicEnabled) return;
       if (!this.bgMusic) {
-        this.bgMusic = document.getElementById('bgAudio') || new Audio('One_More_Quarter.mp3');
+        this.bgMusic = document.getElementById('bgAudio') || new Audio();
       }
-      this.bgMusic.volume = 0.75;
-      this.bgMusic.loop = true;
-      const playPromise = this.bgMusic.play();
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          this.musicStarted = true;
-        }).catch(err => {
-          console.log('Audio autoplay waiting for user gesture:', err);
-        });
+      if (!this.bgMusic.src || this.bgMusic.src === '' || this.bgMusic.src === window.location.href) {
+        this.loadAndPlayCurrentTrack();
+      } else if (this.bgMusic.paused) {
+        this.bgMusic.volume = 0.75;
+        this.bgMusic.loop = false;
+        const playPromise = this.bgMusic.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              this.musicStarted = true;
+            })
+            .catch((err) => {
+              console.log('Audio autoplay waiting for gesture:', err);
+            });
+        }
       }
     }
 
     toggleMusic() {
       if (!this.bgMusic) {
-        this.bgMusic = document.getElementById('bgAudio') || new Audio('One_More_Quarter.mp3');
+        this.loadAndPlayCurrentTrack();
       }
-      // If paused or music disabled, user clicked to turn it ON!
       if (this.bgMusic.paused || !this.musicEnabled) {
         this.musicEnabled = true;
         this.init();
         this.bgMusic.volume = 0.75;
-        this.bgMusic.play().catch(e => console.warn('play error:', e));
+        if (!this.bgMusic.src || this.bgMusic.src === '' || this.bgMusic.src === window.location.href) {
+          this.loadAndPlayCurrentTrack();
+        } else {
+          this.bgMusic.play().catch((e) => console.warn('play error:', e));
+        }
         return true;
       } else {
         this.musicEnabled = false;
@@ -604,7 +684,12 @@
         touchBtnRight: document.getElementById('touchBtnRight'),
         touchBtnJump: document.getElementById('touchBtnJump'),
         touchBtnSlide: document.getElementById('touchBtnSlide'),
-        touchBtnPause: document.getElementById('touchBtnPause')
+        touchBtnPause: document.getElementById('touchBtnPause'),
+
+        // Soundtrack Elements
+        btnNextTrack: document.getElementById('btnNextTrack'),
+        currentTrackDisplay: document.getElementById('currentTrackDisplay'),
+        musicToast: document.getElementById('musicToast')
       };
 
       // Event listeners
@@ -699,6 +784,22 @@
         this.sound.init();
         this.sound.toggleMusic();
         this.updateHeaderButtons();
+      };
+
+      // Next track button (Playlist loop)
+      if (this.dom.btnNextTrack) {
+        this.dom.btnNextTrack.onclick = (e) => {
+          e.stopPropagation();
+          this.sound.init();
+          this.sound.musicEnabled = true;
+          this.sound.nextTrack();
+          this.updateHeaderButtons();
+        };
+      }
+
+      // Track change callback
+      this.sound.onTrackChange = (track, index, total) => {
+        this.handleTrackChange(track, index, total, true);
       };
 
       // Scanline toggle
@@ -860,6 +961,7 @@
         });
       }
 
+      this.handleTrackChange(this.sound.getCurrentTrack(), 0, this.sound.playlist.length, false);
       this.updateHeaderButtons();
     }
 
@@ -1059,6 +1161,29 @@
       }
       if (this.dom.btnFullscreen) {
         this.dom.btnFullscreen.textContent = isMobile ? '⛶' : '⛶ PANTALLA';
+      }
+    }
+
+    handleTrackChange(track, index, total, showToast = true) {
+      if (!track) return;
+      if (this.dom.currentTrackDisplay) {
+        this.dom.currentTrackDisplay.textContent = `"${track.title.toUpperCase()}" (${index + 1}/${total})`;
+      }
+      if (this.dom.btnSound) {
+        this.dom.btnSound.title = `Pista actual: ${track.title} (Clic para silenciar / activar)`;
+      }
+      if (this.dom.btnNextTrack) {
+        const nextIdx = (index + 1) % total;
+        const nextTitle = (this.sound.playlist[nextIdx] && this.sound.playlist[nextIdx].title) || '';
+        this.dom.btnNextTrack.title = `Siguiente canción: ${nextTitle} (Bucle de ${total} temas)`;
+      }
+      if (showToast && this.dom.musicToast) {
+        this.dom.musicToast.textContent = `🎵 AHORA SUENA: "${track.title.toUpperCase()}" (${index + 1}/${total})`;
+        this.dom.musicToast.classList.remove('hidden');
+        if (this.musicToastTimer) clearTimeout(this.musicToastTimer);
+        this.musicToastTimer = setTimeout(() => {
+          if (this.dom.musicToast) this.dom.musicToast.classList.add('hidden');
+        }, 3200);
       }
     }
 
