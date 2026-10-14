@@ -438,6 +438,18 @@ canvas#gameCanvas {
   cursor: pointer;
   transition: all 0.15s ease;
   position: relative;
+  overflow: hidden;
+}
+
+.level-card-thumb {
+  width: 100%;
+  height: 72px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  image-rendering: pixelated;
 }
 
 .level-card:hover {
