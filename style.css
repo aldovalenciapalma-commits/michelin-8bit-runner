@@ -421,6 +421,110 @@ canvas#gameCanvas {
   border-color: #b04370;
 }
 
+/* Level Selection Grid & Cards */
+.level-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.level-card {
+  background: #1c1533;
+  border: 2px solid #4a3c75;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.level-card:hover {
+  background: #2b1f4e;
+  border-color: var(--arcade-cyan);
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+.level-card.selected {
+  border-color: #ffd700;
+  background: #2b2247;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.6), inset 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.level-card.selected::after {
+  content: "✔ ACTIVO";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 7px;
+  background: #ffd700;
+  color: #000;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.level-card-header {
+  font-size: 11px;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.level-card-sub {
+  font-size: 8px;
+  color: #00f0ff;
+  margin-bottom: 8px;
+}
+
+.level-card-desc {
+  font-size: 8px;
+  line-height: 1.5;
+  color: #c7bfe0;
+  margin-bottom: 10px;
+}
+
+.level-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.stat-badge {
+  font-size: 7px;
+  background: #120d22;
+  border: 1px solid #5a4b82;
+  color: #fff;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.highlight-orange {
+  border-color: #ff9933;
+  color: #ffb366;
+}
+
+.highlight-gold {
+  border-color: #ffd700;
+  color: #ffd700;
+}
+
+.highlight-red {
+  border-color: #ff3366;
+  color: #ff5577;
+}
+
+.highlight-blue {
+  border-color: #33aaff;
+  color: #66ccff;
+}
+
+.highlight-cyan {
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+
 /* Footer info */
 .arcade-footer {
   text-align: center;
@@ -435,7 +539,7 @@ canvas#gameCanvas {
   .game-logo {
     font-size: 18px;
   }
-  .instructions-grid {
+  .instructions-grid, .level-cards-grid {
     grid-template-columns: 1fr;
   }
   .arcade-controls-bar {

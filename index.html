@@ -40,6 +40,7 @@
           </div>
         </div>
         <div class="hud-right">
+          <div id="hudLevelBadge" style="font-size: 8px; color: #00f0ff; letter-spacing: 1px; margin-bottom: 2px;">🚗 AUTOPISTA</div>
           <div class="high-score-display">HI: <span id="hudHighScore">05000</span></div>
           <div class="speed-display">VELOCIDAD: <span id="hudSpeed">1.0x</span></div>
           <div id="powerupBadges" class="powerup-badges">
@@ -53,19 +54,107 @@
         <h1 class="game-logo">BIBENDUM RUNNER</h1>
         <h2 class="game-sublogo">MICHELIN 8-BIT HIGHWAY DASH</h2>
         
-        <div style="margin-bottom: 20px;">
+        <div style="margin-bottom: 16px;">
           <img src="assets/sprite_bibendum_jump.png" alt="Bibendum" style="width: 105px; height: auto; image-rendering: pixelated; animation: pulse-badge 0.8s infinite alternate;">
         </div>
 
         <div class="menu-buttons">
           <button id="btnStartGame" class="btn-arcade">▶ INICIAR JUEGO</button>
+          <button id="btnSelectLevel" class="btn-arcade btn-secondary">🌍 SELECCIONAR NIVEL</button>
           <button id="btnHowToPlay" class="btn-arcade btn-secondary">? CÓMO JUGAR</button>
           <button id="btnHighScores" class="btn-arcade btn-secondary">★ RÉCORDS</button>
         </div>
 
-        <div style="margin-top: 24px; font-size: 8px; color: #9c8fb8; line-height: 1.5;">
-          PRESIONA [ESPACIO] O HAZ CLIC PARA EMPEZAR<br>
+        <div id="menuSelectedLevelBadge" style="margin-top: 14px; font-size: 8px; color: #00f0ff; background: rgba(0,240,255,0.12); border: 1px solid #00f0ff; padding: 5px 10px; border-radius: 4px; cursor: pointer;" title="Cambiar Nivel">
+          NIVEL ACTIVO: 🚗 AUTOPISTA
+        </div>
+
+        <div style="margin-top: 14px; font-size: 8px; color: #9c8fb8; line-height: 1.5;">
+          PRESIONA [ESPACIO] O [Q] PARA EMPEZAR<br>
           BANDA SONORA: "ONE MORE QUARTER" 8-BIT
+        </div>
+      </div>
+
+      <!-- Modal de Selección de Nivel -->
+      <div id="levelModal" class="ui-overlay hidden">
+        <div class="modal-content" style="max-width: 650px;">
+          <h3 class="modal-title">SELECCIÓN DE NIVEL</h3>
+          <p style="font-size: 8px; text-align: center; color: #c2bbe0; margin-bottom: 14px;">
+            Elige tu entorno de carrera. Cada nivel cambia las físicas, vidas y multiplicadores.
+          </p>
+          <div class="level-cards-grid">
+            <!-- Autopista -->
+            <div class="level-card selected" data-level="highway">
+              <div class="level-card-header">🚗 AUTOPISTA</div>
+              <div class="level-card-sub">Atardecer Clásico</div>
+              <div class="level-card-desc">El reto equilibrado. 3 vidas, aceleración gradual normal y puntuación 1x.</div>
+              <div class="level-stats">
+                <span class="stat-badge">3 VIDAS</span>
+                <span class="stat-badge">VELOCIDAD 1x</span>
+                <span class="stat-badge">PUNTOS 1x</span>
+                <span class="stat-badge">GRAVEDAD 100%</span>
+              </div>
+            </div>
+            <!-- Desierto -->
+            <div class="level-card" data-level="desert">
+              <div class="level-card-header">🏜️ DESIERTO</div>
+              <div class="level-card-sub">Dunas Ardientes</div>
+              <div class="level-card-desc">¡Aceleración x2! Se acelera el doble de rápido, pero ganas x2 de puntos.</div>
+              <div class="level-stats">
+                <span class="stat-badge">3 VIDAS</span>
+                <span class="stat-badge highlight-orange">ACELERA x2</span>
+                <span class="stat-badge highlight-gold">PUNTOS x2</span>
+                <span class="stat-badge">GRAVEDAD 100%</span>
+              </div>
+            </div>
+            <!-- Jungla -->
+            <div class="level-card" data-level="jungle">
+              <div class="level-card-header">🌴 JUNGLA</div>
+              <div class="level-card-sub">Supervivencia Extrema</div>
+              <div class="level-card-desc">¡Solo 1 vida! Un solo impacto y pierdes. A cambio ganas el triple de puntos (x3).</div>
+              <div class="level-stats">
+                <span class="stat-badge highlight-red">SOLO 1 VIDA</span>
+                <span class="stat-badge">VELOCIDAD 1x</span>
+                <span class="stat-badge highlight-gold">PUNTOS x3</span>
+                <span class="stat-badge">GRAVEDAD 100%</span>
+              </div>
+            </div>
+            <!-- Luna -->
+            <div class="level-card" data-level="moon">
+              <div class="level-card-header">🌕 LUNA</div>
+              <div class="level-card-sub">Gravedad Cero (10%)</div>
+              <div class="level-card-desc">Gravedad reducida al 10%: saltos súper flotantes espaciales. Puntos a la mitad (0.5x).</div>
+              <div class="level-stats">
+                <span class="stat-badge">3 VIDAS</span>
+                <span class="stat-badge">VELOCIDAD 1x</span>
+                <span class="stat-badge highlight-blue">PUNTOS 0.5x</span>
+                <span class="stat-badge highlight-cyan">GRAVEDAD 10%</span>
+              </div>
+            </div>
+          </div>
+          <div style="text-align: center; margin-top: 16px;">
+            <button id="btnCloseLevelModal" class="btn-arcade" style="padding: 10px 22px; font-size: 10px;">CONFIRMAR NIVEL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Nuevo Récord (3 Letras) -->
+      <div id="recordModal" class="ui-overlay hidden">
+        <div class="modal-content" style="max-width: 440px; text-align: center;">
+          <h2 class="game-logo" style="color: #ffd700; font-size: 20px;">★ ¡NUEVO RÉCORD! ★</h2>
+          <p style="font-size: 9px; color: #00f0ff; margin-bottom: 15px;">INGRESA 3 LETRAS DE TU NOMBRE</p>
+          
+          <div style="margin: 18px 0;">
+            <input type="text" id="recordInitials" maxlength="3" placeholder="AAA" autocomplete="off"
+                   style="font-family: 'Press Start 2P', monospace; font-size: 24px; text-align: center; width: 140px; padding: 12px; background: #000; color: #ffd700; border: 3px solid #ffcc00; border-radius: 6px; text-transform: uppercase; letter-spacing: 6px; outline: none; box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);">
+          </div>
+
+          <div style="font-size: 9px; color: #fff; line-height: 1.8; margin-bottom: 18px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 6px;">
+            <div>PUNTUACIÓN: <span id="recordScoreVal" style="color: #ffd700;">00000</span></div>
+            <div>NIVEL: <span id="recordLevelVal" style="color: #00f0ff;">AUTOPISTA</span></div>
+          </div>
+
+          <button id="btnSaveRecord" class="btn-arcade">GUARDAR RÉCORD</button>
         </div>
       </div>
 
@@ -78,8 +167,8 @@
               <h4>MOVIMIENTOS</h4>
               <p><span class="key-badge">W</span> o <span class="key-badge">▲</span> : Carril Arriba</p>
               <p><span class="key-badge">S</span> o <span class="key-badge">▼</span> : Carril Abajo</p>
-              <p><span class="key-badge">ESPACIO</span> : Saltar (evita suelo)</p>
-              <p><span class="key-badge">ALT</span> : Agacharse (mantener presionado)</p>
+              <p><span class="key-badge">ESPACIO</span> o <span class="key-badge">Q</span> : Saltar (evita suelo)</p>
+              <p><span class="key-badge">ALT</span> o <span class="key-badge">A</span> : Agacharse (mantener presionado)</p>
             </div>
             <div class="info-block">
               <h4>OBJETIVO</h4>
@@ -91,11 +180,11 @@
               <p>• <strong>Clavos, Baches, Charcos:</strong> Salta o cambia de carril.</p>
               <p>• <strong>Vallas de Obra:</strong> Salta o cambia de carril.</p>
               <p>• <strong>Carros Rojos:</strong> ¡NO se pueden saltar! Cambia de carril rápidamente.</p>
-              <p>• <strong>Pájaros Voladores:</strong> ¡Mantén presionado <strong>ALT</strong> para agacharte o cambia de carril!</p>
+              <p>• <strong>Pájaros Voladores:</strong> ¡Mantén presionado <strong>ALT</strong> o <strong>A</strong> para agacharte o cambia de carril!</p>
             </div>
             <div class="info-block">
               <h4>ITEMS & PODERES</h4>
-              <p>• <strong>Llanta Dorada:</strong> +100 Puntos.</p>
+              <p>• <strong>Llanta Dorada:</strong> Puntos extras con multiplicador.</p>
               <p>• <strong>Escudo Dorado:</strong> Protege de 1 golpe.</p>
               <p>• <strong>Imán:</strong> Atrae llantas doradas cercanas.</p>
               <p>• <strong>Llanta de Repuesto:</strong> Recupera 1 vida.</p>
@@ -109,9 +198,9 @@
 
       <!-- Modal de Récords -->
       <div id="scoresModal" class="ui-overlay hidden">
-        <div class="modal-content" style="max-width: 420px; text-align: center;">
+        <div class="modal-content" style="max-width: 460px; text-align: center;">
           <h3 class="modal-title">TABLA DE RÉCORDS</h3>
-          <div id="highScoresList" style="font-size: 11px; line-height: 2; margin: 15px 0;">
+          <div id="highScoresList" style="font-size: 10px; line-height: 2.2; margin: 15px 0;">
             <!-- Scores loaded dynamically -->
           </div>
           <button id="btnCloseScores" class="btn-arcade" style="padding: 8px 16px; font-size: 10px;">CERRAR</button>
@@ -131,9 +220,13 @@
       <!-- Pantalla de Game Over -->
       <div id="gameOverOverlay" class="ui-overlay hidden">
         <h2 class="game-logo" style="color: #ff0055; text-shadow: 3px 3px 0 #000, 0 0 20px #ff0055;">GAME OVER</h2>
-        <p id="newRecordBanner" style="color: #ffd700; font-size: 11px; margin-bottom: 12px; display: none;">★ ¡NUEVO RÉCORD HISTÓRICO! ★</p>
+        <p id="newRecordBanner" style="color: #ffd700; font-size: 10px; margin-bottom: 12px; display: none;">★ ¡NUEVO RÉCORD REGISTRADO! ★</p>
 
         <div style="background: rgba(0,0,0,0.6); border: 2px solid #5a4b82; border-radius: 8px; padding: 16px; margin-bottom: 20px; width: 320px; font-size: 10px; line-height: 1.8;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>NIVEL:</span>
+            <span id="finalLevelName" style="color: #00f0ff;">AUTOPISTA</span>
+          </div>
           <div style="display: flex; justify-content: space-between;">
             <span>PUNTOS:</span>
             <span id="finalScore" style="color: #ffd700;">00000</span>
@@ -166,8 +259,8 @@
         <button id="btnCtrlDown" class="ctrl-btn" title="Bajar Carril">▼ ABAJO</button>
       </div>
       <div class="ctrl-group">
-        <button id="btnCtrlJump" class="ctrl-btn ctrl-jump" title="Saltar">⚡ SALTO (ESPACIO)</button>
-        <button id="btnCtrlSlide" class="ctrl-btn ctrl-slide" title="Agacharse">🛡️ AGACHARSE (ALT)</button>
+        <button id="btnCtrlJump" class="ctrl-btn ctrl-jump" title="Saltar">⚡ SALTO (ESPACIO / Q)</button>
+        <button id="btnCtrlSlide" class="ctrl-btn ctrl-slide" title="Agacharse">🛡️ AGACHARSE (ALT / A)</button>
       </div>
     </footer>
   </div>

@@ -391,9 +391,50 @@
       // Game States: 'MENU', 'PLAYING', 'PAUSED', 'GAMEOVER'
       this.state = 'MENU';
 
-      // High scores
-      this.highScore = parseInt(localStorage.getItem('bibendum_high_score') || '5000', 10);
-      this.highScoresList = JSON.parse(localStorage.getItem('bibendum_high_scores_list') || '[5000, 3500, 2000]');
+      // Level configurations
+      this.levels = {
+        highway: {
+          name: 'Autopista',
+          displayName: '🚗 AUTOPISTA',
+          speedAccelMult: 1.0,
+          scoreMult: 1.0,
+          startLives: 3,
+          gravityMult: 1.0,
+          jumpImpulse: -640
+        },
+        desert: {
+          name: 'Desierto',
+          displayName: '🏜️ DESIERTO',
+          speedAccelMult: 2.0,
+          scoreMult: 2.0,
+          startLives: 3,
+          gravityMult: 1.0,
+          jumpImpulse: -640
+        },
+        jungle: {
+          name: 'Jungla',
+          displayName: '🌴 JUNGLA',
+          speedAccelMult: 1.0,
+          scoreMult: 3.0,
+          startLives: 1,
+          gravityMult: 1.0,
+          jumpImpulse: -640
+        },
+        moon: {
+          name: 'Luna',
+          displayName: '🌕 LUNA',
+          speedAccelMult: 1.0,
+          scoreMult: 0.5,
+          startLives: 3,
+          gravityMult: 0.1,
+          jumpImpulse: -280
+        }
+      };
+      this.currentLevelKey = 'highway';
+
+      // High scores with 3-letter initials support & migration
+      this.highScoresList = this.loadHighScores();
+      this.highScore = this.highScoresList.length > 0 ? this.highScoresList[0].score : 5000;
 
       // Player
       this.player = {
@@ -452,6 +493,36 @@
       requestAnimationFrame(this.loop.bind(this));
     }
 
+    loadHighScores() {
+      const defaultScores = [
+        { name: 'BIB', score: 5000, level: 'Autopista' },
+        { name: 'MCH', score: 3500, level: 'Desierto' },
+        { name: 'RUN', score: 2000, level: 'Luna' }
+      ];
+
+      try {
+        const raw = localStorage.getItem('bibendum_high_scores_list');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed.map(item => {
+              if (typeof item === 'number') {
+                return { name: 'BIB', score: item, level: 'Autopista' };
+              }
+              return {
+                name: ((item && item.name) || 'BIB').toString().toUpperCase().slice(0, 3),
+                score: typeof item.score === 'number' ? item.score : parseInt(item.score || 0, 10),
+                level: (item && item.level) || 'Autopista'
+              };
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Could not parse stored scores:', e);
+      }
+      return defaultScores;
+    }
+
     initDom() {
       this.dom = {
         hudOverlay: document.getElementById('hudOverlay'),
@@ -459,18 +530,23 @@
         hudTires: document.getElementById('hudTires'),
         hudHighScore: document.getElementById('hudHighScore'),
         hudSpeed: document.getElementById('hudSpeed'),
+        hudLevelBadge: document.getElementById('hudLevelBadge'),
         powerupBadges: document.getElementById('powerupBadges'),
         lifeTire1: document.getElementById('lifeTire1'),
         lifeTire2: document.getElementById('lifeTire2'),
         lifeTire3: document.getElementById('lifeTire3'),
 
         menuOverlay: document.getElementById('menuOverlay'),
+        menuSelectedLevelBadge: document.getElementById('menuSelectedLevelBadge'),
+        levelModal: document.getElementById('levelModal'),
+        recordModal: document.getElementById('recordModal'),
         helpModal: document.getElementById('helpModal'),
         scoresModal: document.getElementById('scoresModal'),
         pauseOverlay: document.getElementById('pauseOverlay'),
         gameOverOverlay: document.getElementById('gameOverOverlay'),
         crtOverlay: document.getElementById('crtOverlay'),
 
+        finalLevelName: document.getElementById('finalLevelName'),
         finalScore: document.getElementById('finalScore'),
         finalTires: document.getElementById('finalTires'),
         finalDistance: document.getElementById('finalDistance'),
@@ -478,7 +554,14 @@
         newRecordBanner: document.getElementById('newRecordBanner'),
         highScoresList: document.getElementById('highScoresList'),
 
+        recordInitials: document.getElementById('recordInitials'),
+        recordScoreVal: document.getElementById('recordScoreVal'),
+        recordLevelVal: document.getElementById('recordLevelVal'),
+        btnSaveRecord: document.getElementById('btnSaveRecord'),
+
         btnStartGame: document.getElementById('btnStartGame'),
+        btnSelectLevel: document.getElementById('btnSelectLevel'),
+        btnCloseLevelModal: document.getElementById('btnCloseLevelModal'),
         btnHowToPlay: document.getElementById('btnHowToPlay'),
         btnHighScores: document.getElementById('btnHighScores'),
         btnCloseHelp: document.getElementById('btnCloseHelp'),
@@ -532,6 +615,59 @@
         this.goToMenu();
       };
 
+      // Level selection modal handlers
+      if (this.dom.btnSelectLevel) {
+        this.dom.btnSelectLevel.onclick = () => {
+          this.dom.levelModal.classList.remove('hidden');
+        };
+      }
+      if (this.dom.menuSelectedLevelBadge) {
+        this.dom.menuSelectedLevelBadge.onclick = () => {
+          this.dom.levelModal.classList.remove('hidden');
+        };
+      }
+      if (this.dom.btnCloseLevelModal) {
+        this.dom.btnCloseLevelModal.onclick = () => {
+          this.dom.levelModal.classList.add('hidden');
+        };
+      }
+
+      // Level card selection
+      const levelCards = document.querySelectorAll('.level-card');
+      levelCards.forEach(card => {
+        card.onclick = () => {
+          const levelKey = card.getAttribute('data-level');
+          if (this.levels[levelKey]) {
+            this.currentLevelKey = levelKey;
+            levelCards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            const lvl = this.levels[levelKey];
+            if (this.dom.menuSelectedLevelBadge) {
+              this.dom.menuSelectedLevelBadge.textContent = `NIVEL ACTIVO: ${lvl.displayName}`;
+            }
+            if (this.dom.hudLevelBadge) {
+              this.dom.hudLevelBadge.textContent = lvl.displayName;
+            }
+          }
+        };
+      });
+
+      // Record modal initials and button handlers
+      if (this.dom.btnSaveRecord) {
+        this.dom.btnSaveRecord.onclick = () => this.saveHighScoreRecord();
+      }
+      if (this.dom.recordInitials) {
+        this.dom.recordInitials.addEventListener('input', (e) => {
+          e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 3);
+        });
+        this.dom.recordInitials.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.saveHighScoreRecord();
+          }
+        });
+      }
+
       // Sound toggle
       this.dom.btnSound.onclick = (e) => {
         e.stopPropagation();
@@ -581,12 +717,18 @@
 
     initInput() {
       window.addEventListener('keydown', (e) => {
+        // If typing initials in record modal, prevent game shortcuts
+        if (this.dom.recordModal && !this.dom.recordModal.classList.contains('hidden')) {
+          return;
+        }
+
         if (e.repeat && e.code !== 'ArrowDown' && e.code !== 'KeyS') return;
 
         this.sound.init(); // Initialize audio on first keypress
 
         if (this.state === 'PLAYING') {
-          if (e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight' || e.code === 'KeyC') {
+          // Crouch with Alt or A (or C for retro backward compatibility)
+          if (e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight' || e.code === 'KeyA' || e.code === 'KeyC') {
             e.preventDefault();
             if (!this.player.isSliding) {
               this.handleSlideStart();
@@ -597,7 +739,8 @@
           } else if (e.code === 'KeyS' || e.code === 'ArrowDown') {
             e.preventDefault();
             this.handleLaneDown();
-          } else if (e.code === 'Space') {
+          } else if (e.code === 'Space' || e.code === 'KeyQ') {
+            // Jump with Space or Q
             e.preventDefault();
             this.handleJump();
           } else if (e.code === 'Escape' || e.code === 'KeyP') {
@@ -605,7 +748,7 @@
             this.togglePause();
           }
         } else if (this.state === 'MENU') {
-          if (e.code === 'Space' || e.code === 'Enter') {
+          if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyQ') {
             e.preventDefault();
             this.startGame();
           }
@@ -623,7 +766,8 @@
       });
 
       window.addEventListener('keyup', (e) => {
-        if (e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight' || e.code === 'KeyC') {
+        // Stop crouching on release of Alt or A
+        if (e.key === 'Alt' || e.code === 'AltLeft' || e.code === 'AltRight' || e.code === 'KeyA' || e.code === 'KeyC') {
           e.preventDefault();
           this.handleSlideEnd();
         }
@@ -649,9 +793,10 @@
     }
 
     handleJump() {
+      const lvl = this.levels[this.currentLevelKey] || this.levels.highway;
       if (!this.player.isJumping) {
         this.player.isJumping = true;
-        this.player.jumpVy = -640;
+        this.player.jumpVy = lvl.jumpImpulse;
         this.sound.playJump();
         this.createJumpParticles();
       }
@@ -733,6 +878,8 @@
       this.dom.btnSound.textContent = '🔊 MÚSICA: ON';
       this.state = 'PLAYING';
 
+      const lvl = this.levels[this.currentLevelKey] || this.levels.highway;
+
       // Reset player
       this.player.lane = 1;
       this.player.currentY = LANES_Y[1];
@@ -741,7 +888,8 @@
       this.player.jumpVy = 0;
       this.player.isJumping = false;
       this.player.isSliding = false;
-      this.player.lives = 3;
+      this.player.lives = lvl.startLives;
+      this.player.maxLives = lvl.startLives;
       this.player.invulnerableTimer = 0;
       this.player.shieldActive = false;
       this.player.magnetTimer = 0;
@@ -763,6 +911,7 @@
       // DOM updates
       this.dom.menuOverlay.classList.add('hidden');
       this.dom.gameOverOverlay.classList.add('hidden');
+      if (this.dom.recordModal) this.dom.recordModal.classList.add('hidden');
       this.dom.pauseOverlay.classList.add('hidden');
       this.dom.hudOverlay.classList.remove('hidden');
       this.dom.newRecordBanner.style.display = 'none';
@@ -778,6 +927,7 @@
       }
       this.dom.menuOverlay.classList.remove('hidden');
       this.dom.gameOverOverlay.classList.add('hidden');
+      if (this.dom.recordModal) this.dom.recordModal.classList.add('hidden');
       this.dom.pauseOverlay.classList.add('hidden');
       this.dom.hudOverlay.classList.add('hidden');
     }
@@ -806,27 +956,68 @@
       }
       this.sound.playGameOver();
 
-      // Check high score
-      let isNewRecord = false;
-      if (this.score > this.highScore) {
-        this.highScore = this.score;
-        localStorage.setItem('bibendum_high_score', this.highScore.toString());
-        isNewRecord = true;
+      const lvl = this.levels[this.currentLevelKey] || this.levels.highway;
+      const qualifiesForLeaderboard = this.score > 0 && (
+        this.highScoresList.length < 5 ||
+        this.score > this.highScoresList[this.highScoresList.length - 1].score
+      );
+
+      if (qualifiesForLeaderboard) {
+        // Show Record Initials Modal
+        if (this.dom.recordScoreVal) this.dom.recordScoreVal.textContent = this.pad(this.score, 5);
+        if (this.dom.recordLevelVal) this.dom.recordLevelVal.textContent = lvl.displayName;
+        if (this.dom.recordInitials) this.dom.recordInitials.value = '';
+        if (this.dom.recordModal) {
+          this.dom.recordModal.classList.remove('hidden');
+          setTimeout(() => {
+            if (this.dom.recordInitials) this.dom.recordInitials.focus();
+          }, 100);
+        }
+      } else {
+        this.showGameOverScreen(false);
       }
+    }
 
-      // Add to high scores list
-      this.highScoresList.push(this.score);
-      this.highScoresList.sort((a, b) => b - a);
+    saveHighScoreRecord() {
+      let initials = 'AAA';
+      if (this.dom.recordInitials && this.dom.recordInitials.value) {
+        initials = this.dom.recordInitials.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
+      }
+      if (!initials) initials = 'AAA';
+      while (initials.length < 3) initials += 'A';
+
+      const lvl = this.levels[this.currentLevelKey] || this.levels.highway;
+      const newEntry = {
+        name: initials,
+        score: this.score,
+        level: lvl.name
+      };
+
+      this.highScoresList.push(newEntry);
+      this.highScoresList.sort((a, b) => b.score - a.score);
       this.highScoresList = this.highScoresList.slice(0, 5);
-      localStorage.setItem('bibendum_high_scores_list', JSON.stringify(this.highScoresList));
+      this.highScore = this.highScoresList[0].score;
 
-      // Show Game Over UI
+      localStorage.setItem('bibendum_high_scores_list', JSON.stringify(this.highScoresList));
+      localStorage.setItem('bibendum_high_score', this.highScore.toString());
+
+      if (this.dom.recordModal) {
+        this.dom.recordModal.classList.add('hidden');
+      }
+      this.showGameOverScreen(true);
+    }
+
+    showGameOverScreen(isNewRecord) {
+      const lvl = this.levels[this.currentLevelKey] || this.levels.highway;
+      if (this.dom.finalLevelName) {
+        this.dom.finalLevelName.textContent = lvl.displayName;
+      }
       this.dom.finalScore.textContent = this.pad(this.score, 5);
       this.dom.finalTires.textContent = this.goldenTiresCount.toString();
       this.dom.finalDistance.textContent = `${Math.floor(this.distanceMeters)} m`;
       this.dom.finalHighScore.textContent = this.pad(this.highScore, 5);
 
-      if (isNewRecord) {
+      if (isNewRecord || this.score >= this.highScore) {
         this.dom.newRecordBanner.style.display = 'block';
       } else {
         this.dom.newRecordBanner.style.display = 'none';
@@ -837,11 +1028,18 @@
 
     renderHighScores() {
       let html = '';
-      this.highScoresList.forEach((s, idx) => {
+      this.highScoresList.forEach((entry, idx) => {
         const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '★';
-        html += `<div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-          <span>${medal} #${idx + 1}</span>
-          <span style="color: #ffd700;">${this.pad(s, 5)} PTS</span>
+        const name = (entry.name || 'BIB').toUpperCase();
+        const level = entry.level || 'Autopista';
+        const score = typeof entry.score === 'number' ? entry.score : 0;
+        html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: rgba(0,0,0,0.45); padding: 7px 12px; border-radius: 4px; border-left: 3px solid ${idx === 0 ? '#ffd700' : '#00f0ff'};">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span style="font-size: 11px;">${medal} #${idx + 1}</span>
+            <span style="color: #00f0ff; letter-spacing: 2px; font-weight: bold;">${name}</span>
+            <span style="color: #9c8fb8; font-size: 8px;">(${level})</span>
+          </div>
+          <span style="color: #ffd700; font-weight: bold;">${this.pad(score, 5)} PTS</span>
         </div>`;
       });
       this.dom.highScoresList.innerHTML = html;
@@ -850,18 +1048,28 @@
     updateLivesUi() {
       const tires = [this.dom.lifeTire1, this.dom.lifeTire2, this.dom.lifeTire3];
       tires.forEach((tireEl, idx) => {
-        if (idx < this.player.lives) {
-          tireEl.classList.remove('hud-tire-lost');
+        if (!tireEl) return;
+        if (idx >= this.player.maxLives) {
+          tireEl.style.display = 'none';
         } else {
-          tireEl.classList.add('hud-tire-lost');
+          tireEl.style.display = 'inline-block';
+          if (idx < this.player.lives) {
+            tireEl.classList.remove('hud-tire-lost');
+          } else {
+            tireEl.classList.add('hud-tire-lost');
+          }
         }
       });
     }
 
     updateHud() {
+      const lvl = this.levels[this.currentLevelKey] || this.levels.highway;
       this.dom.hudScore.textContent = this.pad(this.score, 5);
       this.dom.hudTires.textContent = this.pad(this.goldenTiresCount, 3);
       this.dom.hudHighScore.textContent = this.pad(this.highScore, 5);
+      if (this.dom.hudLevelBadge) {
+        this.dom.hudLevelBadge.textContent = lvl.displayName;
+      }
       const speedMult = (this.currentSpeed / this.baseSpeed).toFixed(1);
       this.dom.hudSpeed.textContent = `${speedMult}x`;
 
@@ -1043,7 +1251,7 @@
         type = 'shield';
       } else if (r < 0.8) {
         type = 'magnet';
-      } else if (this.player.lives < 3) {
+      } else if (this.player.lives < this.player.maxLives) {
         type = 'life';
       } else {
         type = 'shield';
@@ -1077,10 +1285,12 @@
     update(dt) {
       this.gameTime += dt;
 
-      // Progressive speed increase: starts at 330, smoothly ramps up to 800+
-      this.currentSpeed = Math.min(840, this.baseSpeed + this.distanceMeters * 0.12);
+      const lvl = this.levels[this.currentLevelKey] || this.levels.highway;
+
+      // Progressive speed increase: accelerates with level speedAccelMult
+      this.currentSpeed = Math.min(840, this.baseSpeed + this.distanceMeters * 0.12 * lvl.speedAccelMult);
       this.distanceMeters += (this.currentSpeed * dt) / 10;
-      this.score = Math.floor(this.distanceMeters * 2) + this.goldenTiresCount * 100;
+      this.score = Math.floor((this.distanceMeters * 2 + this.goldenTiresCount * 100) * lvl.scoreMult);
 
       // Parallax scrolling
       this.skylineOffset = (this.skylineOffset + this.currentSpeed * 0.18 * dt) % (assets.skyline ? assets.skyline.width / 2 : 1200);
@@ -1116,13 +1326,15 @@
     }
 
     updatePlayer(dt) {
+      const lvl = this.levels[this.currentLevelKey] || this.levels.highway;
+
       // Smooth lane transition
       this.player.currentY += (this.player.targetY - this.player.currentY) * 14 * dt;
 
-      // Jump physics
+      // Jump physics (level gravity multiplier: e.g. 10% on Moon)
       if (this.player.isJumping) {
         this.player.jumpOffset -= this.player.jumpVy * dt;
-        this.player.jumpVy += 1750 * dt; // gravity
+        this.player.jumpVy += 1750 * lvl.gravityMult * dt; // gravity
 
         if (this.player.jumpOffset <= 0) {
           this.player.jumpOffset = 0;
@@ -1285,7 +1497,7 @@
         this.sound.playPowerup();
         this.createGoldSparkles(item.x + 16, item.y + 16);
       } else if (item.type === 'life') {
-        if (this.player.lives < 3) {
+        if (this.player.lives < this.player.maxLives) {
           this.player.lives++;
           this.updateLivesUi();
         }
@@ -1381,58 +1593,244 @@
     }
 
     renderSkyline() {
+      const lvl = this.currentLevelKey;
       const skylineHeight = 180;
-      if (assets.skyline && assets.skyline.complete) {
-        const img = assets.skyline;
-        // Tile skyline horizontally
-        const w = (skylineHeight / img.height) * img.width;
-        let startX = -this.skylineOffset % w;
-        if (startX > 0) startX -= w;
 
-        for (let x = startX; x < CANVAS_WIDTH + w; x += w) {
-          this.ctx.drawImage(img, x, 0, w, skylineHeight);
-        }
-      } else {
-        // Procedural retro sunset gradient
+      if (lvl === 'desert') {
+        // --- DESERT THEME ---
+        // Warm desert sunset gradient
         const grad = this.ctx.createLinearGradient(0, 0, 0, skylineHeight);
-        grad.addColorStop(0, '#2e1c4e');
-        grad.addColorStop(0.4, '#872b6b');
-        grad.addColorStop(0.7, '#d3523d');
-        grad.addColorStop(1, '#ff9933');
+        grad.addColorStop(0, '#2e0e00');
+        grad.addColorStop(0.35, '#872800');
+        grad.addColorStop(0.7, '#d65500');
+        grad.addColorStop(1, '#ff9e24');
         this.ctx.fillStyle = grad;
         this.ctx.fillRect(0, 0, CANVAS_WIDTH, skylineHeight);
 
-        // Sun
-        this.ctx.fillStyle = '#ffec99';
+        // Blazing scorching sun
+        this.ctx.fillStyle = '#fff4cc';
         this.ctx.beginPath();
-        this.ctx.arc(CANVAS_WIDTH * 0.45, skylineHeight * 0.75, 45, 0, Math.PI * 2);
+        this.ctx.arc(CANVAS_WIDTH * 0.65, skylineHeight * 0.62, 54, 0, Math.PI * 2);
         this.ctx.fill();
 
-        // City silhouette
-        this.ctx.fillStyle = '#1c132b';
-        this.ctx.fillRect(0, skylineHeight - 45, CANVAS_WIDTH, 45);
+        // Layer 1 Sand dunes (distant, slower parallax)
+        this.ctx.fillStyle = '#5c2000';
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, skylineHeight);
+        const duneOffset1 = (this.skylineOffset * 0.4) % CANVAS_WIDTH;
+        for (let x = -duneOffset1; x < CANVAS_WIDTH + 200; x += 180) {
+          this.ctx.quadraticCurveTo(x + 90, skylineHeight - 55, x + 180, skylineHeight);
+        }
+        this.ctx.lineTo(CANVAS_WIDTH, skylineHeight);
+        this.ctx.lineTo(0, skylineHeight);
+        this.ctx.fill();
+
+        // Layer 2 Sand dunes (closer, faster parallax)
+        this.ctx.fillStyle = '#3a1200';
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, skylineHeight);
+        const duneOffset2 = (this.skylineOffset * 0.75) % CANVAS_WIDTH;
+        for (let x = -duneOffset2 - 60; x < CANVAS_WIDTH + 240; x += 220) {
+          this.ctx.quadraticCurveTo(x + 110, skylineHeight - 38, x + 220, skylineHeight);
+        }
+        this.ctx.lineTo(CANVAS_WIDTH, skylineHeight);
+        this.ctx.lineTo(0, skylineHeight);
+        this.ctx.fill();
+
+        // Desert gravel shoulder strip
+        this.ctx.fillStyle = '#8a4c16';
+        this.ctx.fillRect(0, skylineHeight, CANVAS_WIDTH, 14);
+        this.ctx.fillStyle = '#b56d2f';
+        this.ctx.fillRect(0, skylineHeight + 4, CANVAS_WIDTH, 4);
+
+        // Top curb
+        this.ctx.fillStyle = '#edd19d';
+        this.ctx.fillRect(0, skylineHeight + 14, CANVAS_WIDTH, 4);
+
+      } else if (lvl === 'jungle') {
+        // --- JUNGLE THEME ---
+        // Rainforest misty twilight gradient
+        const grad = this.ctx.createLinearGradient(0, 0, 0, skylineHeight);
+        grad.addColorStop(0, '#04160d');
+        grad.addColorStop(0.4, '#0a321e');
+        grad.addColorStop(0.75, '#125232');
+        grad.addColorStop(1, '#258250');
+        this.ctx.fillStyle = grad;
+        this.ctx.fillRect(0, 0, CANVAS_WIDTH, skylineHeight);
+
+        // Misty moon/sun filtered through dense canopy
+        this.ctx.fillStyle = 'rgba(215, 255, 225, 0.45)';
+        this.ctx.beginPath();
+        this.ctx.arc(CANVAS_WIDTH * 0.3, skylineHeight * 0.5, 44, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Distant mountains / tree canopy silhouettes
+        this.ctx.fillStyle = '#072415';
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, skylineHeight);
+        const treeOffset1 = (this.skylineOffset * 0.35) % CANVAS_WIDTH;
+        for (let x = -treeOffset1; x < CANVAS_WIDTH + 200; x += 150) {
+          this.ctx.quadraticCurveTo(x + 75, skylineHeight - 65, x + 150, skylineHeight);
+        }
+        this.ctx.lineTo(CANVAS_WIDTH, skylineHeight);
+        this.ctx.lineTo(0, skylineHeight);
+        this.ctx.fill();
+
+        // Closer dense tropical foliage silhouettes
+        this.ctx.fillStyle = '#03140b';
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, skylineHeight);
+        const treeOffset2 = (this.skylineOffset * 0.65) % CANVAS_WIDTH;
+        for (let x = -treeOffset2; x < CANVAS_WIDTH + 140; x += 90) {
+          this.ctx.lineTo(x + 30, skylineHeight - 45);
+          this.ctx.lineTo(x + 45, skylineHeight - 55);
+          this.ctx.lineTo(x + 60, skylineHeight - 40);
+          this.ctx.lineTo(x + 90, skylineHeight);
+        }
+        this.ctx.lineTo(CANVAS_WIDTH, skylineHeight);
+        this.ctx.lineTo(0, skylineHeight);
+        this.ctx.fill();
+
+        // Lush moss shoulder strip
+        this.ctx.fillStyle = '#184d28';
+        this.ctx.fillRect(0, skylineHeight, CANVAS_WIDTH, 14);
+        this.ctx.fillStyle = '#267a3f';
+        this.ctx.fillRect(0, skylineHeight + 4, CANVAS_WIDTH, 4);
+
+        // Top curb
+        this.ctx.fillStyle = '#bee0a4';
+        this.ctx.fillRect(0, skylineHeight + 14, CANVAS_WIDTH, 4);
+
+      } else if (lvl === 'moon') {
+        // --- MOON THEME ---
+        // Deep cosmos background
+        this.ctx.fillStyle = '#020208';
+        this.ctx.fillRect(0, 0, CANVAS_WIDTH, skylineHeight);
+
+        // Twinkling stars
+        this.ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 45; i++) {
+          const starX = (i * 73 + this.skylineOffset * 0.05) % CANVAS_WIDTH;
+          const starY = (i * 37) % (skylineHeight - 25);
+          const starSize = (i % 3 === 0) ? 2 : 1;
+          const alpha = 0.4 + 0.6 * Math.sin(this.gameTime * 3 + i);
+          this.ctx.globalAlpha = Math.max(0.2, alpha);
+          this.ctx.fillRect(starX, starY, starSize, starSize);
+        }
+        this.ctx.globalAlpha = 1.0;
+
+        // Planet Earth hanging in space
+        const earthX = CANVAS_WIDTH * 0.78;
+        const earthY = 70;
+        const earthR = 38;
+        // Earth glow
+        const earthGlow = this.ctx.createRadialGradient(earthX, earthY, earthR * 0.8, earthX, earthY, earthR * 1.5);
+        earthGlow.addColorStop(0, 'rgba(0, 180, 255, 0.45)');
+        earthGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        this.ctx.fillStyle = earthGlow;
+        this.ctx.beginPath();
+        this.ctx.arc(earthX, earthY, earthR * 1.5, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Earth globe body
+        const earthGrad = this.ctx.createRadialGradient(earthX - 10, earthY - 10, 4, earthX, earthY, earthR);
+        earthGrad.addColorStop(0, '#53b4ff');
+        earthGrad.addColorStop(0.6, '#0f62c9');
+        earthGrad.addColorStop(1, '#05184f');
+        this.ctx.fillStyle = earthGrad;
+        this.ctx.beginPath();
+        this.ctx.arc(earthX, earthY, earthR, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Lunar crater horizon
+        this.ctx.fillStyle = '#1b1d24';
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, skylineHeight);
+        const moonOffset = (this.skylineOffset * 0.3) % CANVAS_WIDTH;
+        for (let x = -moonOffset; x < CANVAS_WIDTH + 200; x += 140) {
+          this.ctx.quadraticCurveTo(x + 70, skylineHeight - 25, x + 140, skylineHeight);
+        }
+        this.ctx.lineTo(CANVAS_WIDTH, skylineHeight);
+        this.ctx.lineTo(0, skylineHeight);
+        this.ctx.fill();
+
+        // Lunar surface shoulder strip
+        this.ctx.fillStyle = '#2d303a';
+        this.ctx.fillRect(0, skylineHeight, CANVAS_WIDTH, 14);
+        this.ctx.fillStyle = '#444857';
+        this.ctx.fillRect(0, skylineHeight + 4, CANVAS_WIDTH, 4);
+
+        // Top curb
+        this.ctx.fillStyle = '#00f0ff';
+        this.ctx.fillRect(0, skylineHeight + 14, CANVAS_WIDTH, 4);
+
+      } else {
+        // --- HIGHWAY THEME (Default) ---
+        if (assets.skyline && assets.skyline.complete) {
+          const img = assets.skyline;
+          const w = (skylineHeight / img.height) * img.width;
+          let startX = -this.skylineOffset % w;
+          if (startX > 0) startX -= w;
+
+          for (let x = startX; x < CANVAS_WIDTH + w; x += w) {
+            this.ctx.drawImage(img, x, 0, w, skylineHeight);
+          }
+        } else {
+          // Sunset fallback
+          const grad = this.ctx.createLinearGradient(0, 0, 0, skylineHeight);
+          grad.addColorStop(0, '#2e1c4e');
+          grad.addColorStop(0.4, '#872b6b');
+          grad.addColorStop(0.7, '#d3523d');
+          grad.addColorStop(1, '#ff9933');
+          this.ctx.fillStyle = grad;
+          this.ctx.fillRect(0, 0, CANVAS_WIDTH, skylineHeight);
+
+          this.ctx.fillStyle = '#ffec99';
+          this.ctx.beginPath();
+          this.ctx.arc(CANVAS_WIDTH * 0.45, skylineHeight * 0.75, 45, 0, Math.PI * 2);
+          this.ctx.fill();
+
+          this.ctx.fillStyle = '#1c132b';
+          this.ctx.fillRect(0, skylineHeight - 45, CANVAS_WIDTH, 45);
+        }
+
+        // Road shoulder green verge strip
+        this.ctx.fillStyle = '#267b57';
+        this.ctx.fillRect(0, skylineHeight, CANVAS_WIDTH, 14);
+        this.ctx.fillStyle = '#4da875';
+        this.ctx.fillRect(0, skylineHeight + 4, CANVAS_WIDTH, 4);
+
+        // Top white curb line
+        this.ctx.fillStyle = '#e8e5c4';
+        this.ctx.fillRect(0, skylineHeight + 14, CANVAS_WIDTH, 4);
       }
-
-      // Road shoulder green verge strip (just like concept art)
-      this.ctx.fillStyle = '#267b57';
-      this.ctx.fillRect(0, skylineHeight, CANVAS_WIDTH, 14);
-      this.ctx.fillStyle = '#4da875';
-      this.ctx.fillRect(0, skylineHeight + 4, CANVAS_WIDTH, 4);
-
-      // Top white curb line
-      this.ctx.fillStyle = '#e8e5c4';
-      this.ctx.fillRect(0, skylineHeight + 14, CANVAS_WIDTH, 4);
     }
 
     renderRoad() {
+      const lvl = this.currentLevelKey;
+      let asphaltColor = '#6a7178';
+      let dashColor = '#ece8cb';
+      let bottomCurbColor = '#dcd8ba';
+
+      if (lvl === 'desert') {
+        asphaltColor = '#8c7b69';
+        dashColor = '#ffd97d';
+        bottomCurbColor = '#bfa588';
+      } else if (lvl === 'jungle') {
+        asphaltColor = '#37473e';
+        dashColor = '#a8e68c';
+        bottomCurbColor = '#245938';
+      } else if (lvl === 'moon') {
+        asphaltColor = '#242730';
+        dashColor = '#00f0ff';
+        bottomCurbColor = '#566075';
+      }
+
       // Asphalt base
-      this.ctx.fillStyle = '#6a7178';
+      this.ctx.fillStyle = asphaltColor;
       this.ctx.fillRect(0, ROAD_TOP_Y + 18, CANVAS_WIDTH, CANVAS_HEIGHT - (ROAD_TOP_Y + 18));
 
-      // Lane dividers (animated dashed white lines)
-      // Divider 1: between Top & Middle lane (y ≈ 305)
-      // Divider 2: between Middle & Bottom lane (y ≈ 415)
-      // Bottom road curb line (y ≈ 525)
+      // Lane dividers
       const dividerY1 = 305;
       const dividerY2 = 415;
       const bottomCurbY = 525;
@@ -1441,9 +1839,8 @@
       const dashGap = 55;
       const totalDash = dashWidth + dashGap;
 
-      this.ctx.fillStyle = '#ece8cb';
+      this.ctx.fillStyle = dashColor;
 
-      // Dashed line 1
       let startX = -this.roadDashesOffset;
       while (startX < CANVAS_WIDTH + totalDash) {
         this.ctx.fillRect(startX, dividerY1, dashWidth, 8);
@@ -1452,7 +1849,7 @@
       }
 
       // Continuous bottom road curb line
-      this.ctx.fillStyle = '#dcd8ba';
+      this.ctx.fillStyle = bottomCurbColor;
       this.ctx.fillRect(0, bottomCurbY, CANVAS_WIDTH, 6);
     }
 
@@ -1542,6 +1939,36 @@
             this.ctx.drawImage(sprite, drawX, drawY, p.width, p.height);
           }
         }
+      }
+
+      // Astronaut bubble helmet on Moon
+      if (this.currentLevelKey === 'moon') {
+        this.ctx.save();
+        const headCenterX = drawX + 38;
+        const headCenterY = drawY + 20;
+
+        // Semi-transparent visor
+        this.ctx.fillStyle = 'rgba(0, 240, 255, 0.18)';
+        this.ctx.beginPath();
+        this.ctx.arc(headCenterX, headCenterY, 32, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Neon cyan helmet border
+        this.ctx.strokeStyle = '#00f0ff';
+        this.ctx.lineWidth = 2.5;
+        this.ctx.shadowColor = '#00f0ff';
+        this.ctx.shadowBlur = 8;
+        this.ctx.stroke();
+
+        // White curved glare reflection
+        this.ctx.shadowBlur = 0;
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(headCenterX - 8, headCenterY - 8, 18, -Math.PI * 0.7, -Math.PI * 0.2);
+        this.ctx.stroke();
+
+        this.ctx.restore();
       }
     }
 
